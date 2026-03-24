@@ -8,11 +8,12 @@ import { Label } from "../ui/label"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useAuthStore } from "@/stores/useAuthStore"
+import { useNavigate } from "react-router"
 const signInSchema = z.object({
-  firstname: z.string().min(1, "Ten bat buoc phai co"),
-  lastname: z.string().min(1, "Ho bat buoc phai co"),
+   
   username: z.string().min(3, "Ten dang nhap co it nhat 3 ki tu"),
-  email: z.email("Email k hop le"),
+   
   password: z.string().min(6, "Password toi thieu 6 ki tu")
 
 
@@ -27,13 +28,20 @@ export function SigninForm({
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInFormValues>({
       resolver: zodResolver(signInSchema)
     });
-  
+  const navigate = useNavigate()
+
+    const { signIn }= useAuthStore()
   
   
     const onSubmit = async (data: SignInFormValues) => {
   
       // goi api backend
-  
+      const { username, password } = data
+      
+      await signIn(username, password)
+      navigate('/')
+      console.log("hello");
+      
     }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

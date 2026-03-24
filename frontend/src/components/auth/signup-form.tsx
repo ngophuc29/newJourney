@@ -8,6 +8,8 @@ import { Label } from "../ui/label"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useAuthStore } from "@/stores/useAuthStore"
+import { useNavigate } from "react-router"
 const signUpSchema = z.object({
   firstname: z.string().min(1, "Ten bat buoc phai co"),
   lastname: z.string().min(1, "Ho bat buoc phai co"),
@@ -24,6 +26,8 @@ export function SignupForm({
   ...props
 }: React.ComponentProps<"div">) {
 
+  const navigate = useNavigate()
+  const { signUp } = useAuthStore()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema)
   });
@@ -33,6 +37,11 @@ export function SignupForm({
   const onSubmit = async (data: SignUpFormValues) => {
 
     // goi api backend
+
+    const { firstname, lastname, username, password, email } = data
+    await signUp(username, password, email, firstname, lastname)
+
+    navigate("/signin")
 
   }
   return (
@@ -71,7 +80,7 @@ export function SignupForm({
 
                   {errors.lastname && (
                     <p className="text-destructive text-sm">
-                      { errors.lastname.message}
+                      {errors.lastname.message}
                     </p>
                   )}
                 </div>
