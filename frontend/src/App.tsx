@@ -1,4 +1,4 @@
-import { BrowserRouter,Routes,Route } from "react-router"
+import { BrowserRouter,Routes,Route } from "react-router-dom"
 import SignInpage from "./pages/SignInpage"
 import SignUpPage from "./pages/SignUpPage"
 import ChatApp from "./pages/ChatApp"
@@ -15,11 +15,8 @@ function App() {
           <Route element={<SignInpage />} path="/signin" />
           <Route element={<SignUpPage />} path="/signup" />
           {/* protected route */}
-          <Route
-            element={<ProtectedRoute/>}
-          >
-          <Route element={<ChatApp/>} path="/" />
-
+          <Route path="/" element={<ProtectedRoute/>}>
+            <Route index element={<ChatApp/>} />
           </Route>
 
       </Routes>

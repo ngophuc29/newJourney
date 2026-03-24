@@ -28,8 +28,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ loading: true });
       // goi api
-      const { accessToken } = await authService.signIn(username, password);
-      set({ accessToken: accessToken });
+      const res = await authService.signIn(username, password);
+      // backend returns `accesstoken` (lowercase)
+      const accessToken = res?.accesstoken ?? null;
+      set({ accessToken });
+      console.log("useAuthStore: set accessToken", accessToken);
       toast.success("Dang nhap thanh cong ! Ban se chuyen sang trang chat");
     } catch (error) {
       console.log(error);
