@@ -29,9 +29,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ loading: true });
       // goi api
       const res = await authService.signIn(username, password);
-      // backend returns `accesstoken` (lowercase)
-      const accessToken = res?.accesstoken ?? null;
+      // backend returns `accessToken` (lowercase)
+      const accessToken = res?.accessToken ?? null;
       set({ accessToken });
+
+      await get().fetchMe();
       console.log("useAuthStore: set accessToken", accessToken);
       toast.success("Dang nhap thanh cong ! Ban se chuyen sang trang chat");
     } catch (error) {
@@ -43,14 +45,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-      try {
-        get().clearState();
-          await authService.signOut()
+    try {
+      get().clearState();
+      await authService.signOut();
       toast.success("Dang xuat thanh cong !");
-          
-      } catch (error) {
-          console.log(error);
-          toast.error("Loi xay ra khi logout hay thu lai");
+    } catch (error) {
+      console.log(error);
+      toast.error("Loi xay ra khi logout hay thu lai");
     }
   },
+
+  fetchMe: async () => {
+    try {
+      set({ loading: true })
+      const user = await authService.fetchMe()
+      set({user})
+    } catch (error) {
+      console.log(error);
+      set({user:null,accessToken:null})
+      toast.error("Loi xay ra khi lay du lieu nguoi dung");
+    }
+    finally {
+      set({loading:false})
+    }
+  }
 }));
+// 1:42:39

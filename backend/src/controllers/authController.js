@@ -76,9 +76,9 @@ export const signIn = async (req, res) => {
             return res.status(401).json({ message: "username hoặc password k chính xác" })
 
         }
-        //tạo accesstoken với JWT
+        //tạo accessToken với JWT
 
-        const accesstoken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
+        const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: ACCESS_TOKEN_TTL })
         // tạo refeshtoken
 
         const refeshToken = crypto.randomBytes(64).toString('hex')
@@ -101,11 +101,11 @@ export const signIn = async (req, res) => {
 
         })
 
-        // trả accesstoken về trong res
+        // trả accessToken về trong res
 
         return res.status(200).json({
             message: `User ${user.displayName} đã loging thành công`,
-            accesstoken
+            accessToken
         })
     } catch (error) {
         console.log("Lỗi khi đăng nhập tài khoản", error);

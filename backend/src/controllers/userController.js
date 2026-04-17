@@ -1,4 +1,4 @@
-export const autme = async (req, res) => {
+export const authme = async (req, res) => {
     
     try {
         const user = req.user

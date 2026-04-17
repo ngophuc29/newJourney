@@ -27,7 +27,9 @@ export function SigninForm({
 }: React.ComponentProps<"div">) { 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInFormValues>({
       resolver: zodResolver(signInSchema)
-    });
+  });
+  
+  
   const navigate = useNavigate()
 
     const { signIn }= useAuthStore()
