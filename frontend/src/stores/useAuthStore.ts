@@ -8,6 +8,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   user: null,
   loading: false,
+  setAccessToken :(accessToken)=>{
+    set({accessToken})
+  },
   clearState: () => {
     set({ accessToken: null, user: null, loading: false });
   },
@@ -31,7 +34,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await authService.signIn(username, password);
       // backend returns `accessToken` (lowercase)
       const accessToken = res?.accessToken ?? null;
-      set({ accessToken });
+      // set({ accessToken });
+      get().setAccessToken(accessToken)
 
       await get().fetchMe();
       console.log("useAuthStore: set accessToken", accessToken);
@@ -72,9 +76,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ loading: true });
 
-      const { user, fetchMe } = get();
+      const { user, fetchMe ,setAccessToken} = get();
       const accessToken = await authService.refreshToken();
-      set({ accessToken });
+      // set({ accessToken });
+      setAccessToken(accessToken)
+
       if (!user) {
         await fetchMe();
       }

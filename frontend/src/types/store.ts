@@ -6,7 +6,7 @@ export interface AuthState {
   loading: boolean;
 
   clearState: () => void;
-
+setAccessToken:(accessToken:string)=>void
   signUp: (
     username: string,
     password: string,
