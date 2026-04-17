@@ -57,16 +57,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   fetchMe: async () => {
     try {
-      set({ loading: true })
-      const user = await authService.fetchMe()
-      set({user})
+      set({ loading: true });
+      const user = await authService.fetchMe();
+      set({ user });
     } catch (error) {
       console.log(error);
-      set({user:null,accessToken:null})
+      set({ user: null, accessToken: null });
       toast.error("Loi xay ra khi lay du lieu nguoi dung");
+    } finally {
+      set({ loading: false });
     }
-    finally {
-      set({loading:false})
+  },
+  refreshToken: async () => {
+    try {
+      set({ loading: true });
+
+      const { user, fetchMe } = get();
+      const accessToken = await authService.refreshToken();
+      set({ accessToken });
+      if (!user) {
+        await fetchMe();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Phien dang nhap da het han ,vui long dang nhap lai");
+
+      get().clearState();
+    } finally {
+      set({ loading: false });
     }
   }
 }));
