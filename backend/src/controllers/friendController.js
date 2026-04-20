@@ -3,7 +3,7 @@ import User from "../models/User.js"
 import FriendRequest from "../models/FriendRequest.js"
 
 
-export const sendFriendRequest = async (req,res) => {
+export const sendFriendRequest = async (req, res) => {
     try {
 
 
@@ -65,7 +65,7 @@ export const sendFriendRequest = async (req,res) => {
     }
 }
 
-export const acceptFriend = async (req,res) => {
+export const acceptFriend = async (req, res) => {
     try {
 
         const { requestId } = req.params
@@ -104,13 +104,13 @@ export const acceptFriend = async (req,res) => {
 
 
     } catch (error) {
-        console.log("Loi khi chap nhan loi moi ket ban",error);
+        console.log("Loi khi chap nhan loi moi ket ban", error);
         return res.status(500).json({ message: "Loi he thong" })
 
     }
 }
 
-export const deniedFriend = async (req,res) => {
+export const deniedFriend = async (req, res) => {
     try {
         const { requestId } = req.params
         const userId = req.user._id
@@ -128,7 +128,7 @@ export const deniedFriend = async (req,res) => {
         await FriendRequest.findByIdAndDelete(requestId)
 
         return res.status(200).json({
-            message:"Tu choi loi moi ket ban thanh cong"
+            message: "Tu choi loi moi ket ban thanh cong"
         })
 
     } catch (error) {
@@ -139,8 +139,25 @@ export const deniedFriend = async (req,res) => {
 }
 
 //31:51
-export const getAllFriend = (req,res) => {
+export const getAllFriend = async (req, res) => {
     try {
+        const userId = req.user._id
+        const friendships = await Friend.find({
+            $or: [
+                { userA: userId }, { userB: userId }
+            ]
+        })
+            .populate("userA", "_id displayName avatarURL")
+            .populate("userB", "_id displayName avatarURL").lean()
+
+
+        if (friendships.length == 0) {
+            return res.status(200).json({ friends: [] })
+        }
+
+        const friends = friendships.map((f) => f.userA._id.toString() === userId.toString() ? f.userB : f.userA)
+
+        return res.status(200).json({ friends })
 
     } catch (error) {
         console.log("Loi khi lay danh sach ban be");
@@ -148,9 +165,18 @@ export const getAllFriend = (req,res) => {
 
     }
 }
-export const getFriendRequest = (req,res) => {
+export const getFriendRequest = async (req, res) => {
     try {
+        const userId = req.user._id
 
+        const populateFields = '_id username displayName avatarURL'
+        
+        const [sent, receive] = await Promise.all([
+            FriendRequest.find({ from: userId }).populate('to', populateFields),// loi moi gui di 
+            FriendRequest.find({ to: userId }).populate('from', populateFields),// loi moi nhan duoc
+        ])
+
+        return res.status(200).json({sent,receive})
     } catch (error) {
         console.log("Loi khi lay danh sach loi moi ket ban");
         return res.status(500).json({ message: "Loi he thong" })
