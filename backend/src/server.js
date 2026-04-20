@@ -3,6 +3,8 @@ import dotenv from "dotenv"
 import { connectDB } from "./libs/db.js"
 import authRoutes from "./routes/authRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
+import friendRoutes from "./routes/friendRoutes.js"
+
 import cookieParser from 'cookie-parser'
 import cors from "cors"
 import { protectedRoute } from "./middlewares/authMiddleware.js"
@@ -23,7 +25,9 @@ app.use(cookieParser())
 app.use('/api/auth', authRoutes)
 // private routes
 app.use(protectedRoute)
-app.use("/api/users" ,userRoutes)
+app.use("/api/users", userRoutes)
+app.use("/api/friend", friendRoutes)
+
 connectDB()
 
 app.listen(PORT,() => {
