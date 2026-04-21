@@ -83,7 +83,7 @@ const conversationSchema = new mongoose.Schema({
         
     }
 }, {
-    timestamps:TextTrackCue
+    timestamps:true
 })
 
 conversationSchema.index({
@@ -91,5 +91,5 @@ conversationSchema.index({
     lastMessageAt:1
 })
 
-const Conversation = mongoose.model("Conversation", conversationSchema),
+const Conversation = mongoose.model("Conversation", conversationSchema)
 export default Conversation

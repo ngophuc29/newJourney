@@ -4,6 +4,8 @@ import { connectDB } from "./libs/db.js"
 import authRoutes from "./routes/authRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
 import friendRoute from "./routes/friendRoute.js"
+import messageRoute from "./routes/messageRoutes.js"
+
 import cookieParser from 'cookie-parser'
 import cors from "cors"
 import { protectedRoute } from "./middlewares/authMiddleware.js"
@@ -26,6 +28,8 @@ app.use('/api/auth', authRoutes)
 app.use(protectedRoute)
 app.use("/api/users", userRoutes)
 app.use("/api/friend", friendRoute)
+app.use("/api/message", messageRoute)
+
 
 connectDB()
 
