@@ -52,3 +52,34 @@ export const checkFriendShip = async (req,res,next) => {
         
     }
 }
+
+export const checkGroupMemberShip = async (req, res, next) => {
+    
+    try {
+        const { conversationId } = req.body
+        const userId = req.user._id
+        
+        const conversation = await Conversation.findById(conversationId)
+
+        if (!conversation) {
+            return res.status(404).json({ message: "khong tim thay cuoc tro chuyen" })
+        }
+
+        const isMember = conversation.participant.some(
+            (p)=>p.userId.toString() === userId.toString()
+        )
+
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong nhom nay" })
+            
+        }
+
+        req.conversation = conversation
+        next()
+    } catch (error) {
+        console.log("LOi xay ra khi check membership", error);
+        return res.status(500).json({ message: "Loi he thong" })
+
+    }
+    
+}

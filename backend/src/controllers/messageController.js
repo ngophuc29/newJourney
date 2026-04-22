@@ -58,5 +58,31 @@ export const sendDirectMessage = async (req,res) => {
 }
 
 export const sendGroupMessage = async (req, res) => {
+    try {
+        const { conversationId, content } = req.body
+        const senderId = req.user._id
+        const conversation = req.conversation
 
+        if (!content) {
+            return res.status(400).json({message:"thieu noi dung"})
+        }
+
+        const message = await Message.create({
+            conversationId,
+            senderId,
+            content
+        })
+
+
+        updateConversationAfterCreateMessage(conversation, message, senderId)
+        
+        await conversation.save();
+
+
+        return res.status(201).json({message})
+    } catch (error) {
+        console.log("loi khi gui tin nhan nhom");
+        return res.status(500).json({ message:"Loi he thong" })
+
+    }
 }
