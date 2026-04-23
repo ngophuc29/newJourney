@@ -2,7 +2,7 @@ export const updateConversationAfterCreateMessage = (conversation, message, send
     
     // khi 1 tin nhan da gui di ta can Cap nhat seenBy va cap nhat LastMessage
     conversation.set({
-        sendBy: [],
+        seenBy: [],
         lastMessageAt: message.createdAt,
         lastMessage: {
             _id: message._id,

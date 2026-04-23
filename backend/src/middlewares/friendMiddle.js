@@ -17,7 +17,8 @@ export const checkFriendShip = async (req,res,next) => {
         }
 
         if (recipientId) {
-            const [userA, userB] = [me, recipientId]
+            const [userA, userB] = pair(me, recipientId);
+
 
             const isFriend = await Friend.findOne({ userA, userB })
 
