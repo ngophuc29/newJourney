@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
 import friendRoutes from "./routes/friendRoutes.js"
 import messageRoutes from "./routes/messageRoutes.js"
+import conversationRoutes from "./routes/conversationRoutes.js"
 import cookieParser from 'cookie-parser'
 import cors from "cors"
 import { protectedRoute } from "./middlewares/authMiddleware.js"
@@ -28,6 +29,8 @@ app.use(protectedRoute)
 app.use("/api/users", userRoutes)
 app.use("/api/friend", friendRoutes)
 app.use("/api/message", messageRoutes)
+app.use("/api/conversation", conversationRoutes)
+
 
 connectDB()
 
