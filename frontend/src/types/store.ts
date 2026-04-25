@@ -21,3 +21,10 @@ setAccessToken:(accessToken:string)=>void
   fetchMe: () => Promise<void>;
   refreshToken: () => Promise<void>;
 }
+
+
+export interface ThemeStore {
+  isDarK: boolean,
+  toggleTheme: () => void,
+  setTheme : (dark : boolean)=>void
+}
