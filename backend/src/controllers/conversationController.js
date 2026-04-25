@@ -61,8 +61,14 @@ export const createConversation = async (req, res) => {
                 path: 'lastMessage.senderId', select: "displayName avatarURL"
             }
         ])
-
-        return res.status(200).json({ conversation })
+        const participants = (conversation.participant || []).map((p) => ({
+            _id: p.userId?._id,
+            displayName: p.userId?.displayName,
+            avatarUrl: p.userId?.avatarURL ?? null,
+            joinedAt: p.joinedAt,
+        }));
+        const formatted = { ...conversation.toObject(), participants };
+        return res.status(200).json({ conversation: formatted })
     } catch (error) {
         console.log("loi khi tao conversation", error);
         return res.status(500).json({ message: "Loi he thong " })
@@ -112,7 +118,7 @@ export const getConversation = async (req, res) => {
 export const getMessages = async (req, res) => {
     try {
 
-        const {conversationId} = req.params;
+        const { conversationId } = req.params;
         const { limit = 50, cursor } = req.query
 
         if (!conversationId) {
@@ -143,7 +149,7 @@ export const getMessages = async (req, res) => {
 
         messages = messages.reverse()
 
-        return res.status(200).json({messages,nextCursor})
+        return res.status(200).json({ messages, nextCursor })
 
     } catch (error) {
         console.log("loi khi lay message", error);
