@@ -1,3 +1,4 @@
+import type { Conversation, Message } from "./chat";
 import type { User } from "./User";
 
 export interface AuthState {
@@ -27,4 +28,19 @@ export interface ThemeStore {
   isDarK: boolean,
   toggleTheme: () => void,
   setTheme : (dark : boolean)=>void
+}
+
+
+export interface ChatState {
+  conversations: Conversation[];
+  messages: Record<string, {
+    items: Message[], // mang cac tin nhan
+    hasMore: boolean, // co de ktra con tn chua load k
+    nextCursor?: string | null,
+  
+  }>
+  activeConversationId: string | null, // id cuoc tro chuyen dang mo
+  loading: boolean,
+  reset: () => void;
+  setActionConversation: (id: string | null ) => void
 }
