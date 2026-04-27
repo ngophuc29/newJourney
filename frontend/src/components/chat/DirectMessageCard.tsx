@@ -10,7 +10,7 @@ import UnreadCountBadge from './UnreadCountBadge'
 const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
 
   const { user } = useAuthStore()
-  const { activeConversationId, setActionConversation, messages } = useChatStore()
+  const { activeConversationId, setActionConversation, messages,fetchMessages } = useChatStore()
 
   if (!user) return null
 
@@ -26,7 +26,7 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const handleSelectionConversation = async (id: string)=>{
     setActionConversation(id)
     if (!messages[id]) {
-      
+      await fetchMessages();
     }
 
   }
@@ -41,7 +41,7 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
       leftSection={
         <>
           <UserAvatar type='sidebar' name={otherUser.displayName ?? ""}
-          avatarURL={otherUser.avatarUrl ?? undefined}
+          avatarURL={otherUser.avatarURL?? undefined}
           />
 
           <StatusBadge status='online' />

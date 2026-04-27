@@ -33,15 +33,19 @@ export interface ThemeStore {
 
 export interface ChatState {
   conversations: Conversation[];
-  messages: Record<string, {
-    items: Message[], // mang cac tin nhan
-    hasMore: boolean, // co de ktra con tn chua load k
-    nextCursor?: string | null,
-  
-  }>
-  activeConversationId: string | null, // id cuoc tro chuyen dang mo
-  loading: boolean,
+  messages: Record<
+    string,
+    {
+      items: Message[]; // mang cac tin nhan
+      hasMore: boolean; // co de ktra con tn chua load k
+      nextCursor?: string | null;
+    }
+  >;
+  activeConversationId: string | null; // id cuoc tro chuyen dang mo
+  convoLoading: boolean;
+  messasgeLoading: boolean;
   reset: () => void;
-  setActionConversation: (id: string | null) => void,
-  fetchConversation : () => Promise<void>
+  setActionConversation: (id: string | null) => void;
+  fetchConversation: () => Promise<void>;
+  fetchMessages: (conversationId?: string) => Promise<void>;
 }

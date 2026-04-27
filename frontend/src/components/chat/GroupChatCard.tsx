@@ -8,19 +8,19 @@ import UnreadCountBadge from './UnreadCountBadge'
 const GroupChatCard = ({ convo }: { convo: Conversation }) => {
 
     const { user } = useAuthStore()
-    const { activeConversationId, setActionConversation, messages } = useChatStore()
+    const { activeConversationId, setActionConversation, messages, fetchMessages } = useChatStore()
 
     if (!user) return null
 
 
     const unreadCount = convo.unreadCounts[user._id]
     const name = convo.group?.name ?? ''
-console.log("name cua group : ",name);
+    console.log("name cua group : ", name);
 
     const handleSelectionConversation = async (id: string) => {
         setActionConversation(id)
         if (!messages[id]) {
-
+            await fetchMessages()
         }
 
     }
