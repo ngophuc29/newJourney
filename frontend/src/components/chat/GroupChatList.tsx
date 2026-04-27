@@ -1,8 +1,25 @@
 import React from 'react'
+import { useChatStore } from '@/stores/useChatStore'
+import type { Conversation } from '@/types/chat'
+import DirectMessageCard from './DirectMessageCard'
+import GroupChatCard from './GroupChatCard'
 
 const GroupChatList = () => {
+  const { conversations } = useChatStore()
+
+  if (!conversations) return
+
+  const groupConversation = conversations.filter((convo) => convo.type === 'group')
   return (
-    <div>GroupChatList</div>
+    <div className="flex-1 overflow-y-auto p-2 space-y-2">
+
+      {groupConversation.map((convo) => (
+        <GroupChatCard
+          key={convo._id}
+          convo={convo}
+        />
+      ))}
+    </div>
   )
 }
 

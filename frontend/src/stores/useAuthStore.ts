@@ -54,6 +54,8 @@ export const useAuthStore = create<AuthState>()(
           get().setAccessToken(accessToken);
 
           await get().fetchMe();
+
+          useChatStore.getState().fetchConversation()
           console.log("useAuthStore: set accessToken", accessToken);
           toast.success("Dang nhap thanh cong ! Ban se chuyen sang trang chat");
         } catch (error) {

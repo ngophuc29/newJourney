@@ -102,6 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupAction>
 
           <SidebarGroupContent>
+            
             <DirectMessageList />
           </SidebarGroupContent>
         </SidebarGroup>

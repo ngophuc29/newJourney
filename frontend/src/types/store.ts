@@ -42,5 +42,6 @@ export interface ChatState {
   activeConversationId: string | null, // id cuoc tro chuyen dang mo
   loading: boolean,
   reset: () => void;
-  setActionConversation: (id: string | null ) => void
+  setActionConversation: (id: string | null) => void,
+  fetchConversation : () => Promise<void>
 }

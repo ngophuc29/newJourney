@@ -1,3 +1,4 @@
+import { chatService } from "@/services/chatService";
 import type { ChatState } from "@/types/store";
 import { set } from "zod";
 import { create } from "zustand";
@@ -10,7 +11,7 @@ export const useChatStore = create<ChatState>()(
       messages: {},
       activeConversationId: null,
       loading: false,
-      setActionConversation: (id) => set({ activeConversationId:id }),
+      setActionConversation: (id) => set({ activeConversationId: id }),
       reset() {
         set({
           conversations: [],
@@ -19,10 +20,21 @@ export const useChatStore = create<ChatState>()(
           loading: false,
         });
       },
+      fetchConversation: async () => {
+        try {
+          set({ loading: true });
+            const { conversations } = await chatService.fetchConversation();
+            
+            set({conversations,loading :false})
+        } catch (error) {
+            console.log("Loi xay ra khi fetch conversation")
+            set({loading:false})
+        }
+      },
     }),
     {
       name: "chat-storage",
-      partialize: (state) => ({ conversation: state.conversations }),
+      partialize: (state) => ({ conversations: state.conversations }),
     },
   ),
 );
