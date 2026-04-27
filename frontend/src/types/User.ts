@@ -2,8 +2,8 @@ export interface User {
     _id: string,
     username: string,
     email: string,
-    display: string,
-    avatarUrl?: string,
+    displayName: string,
+    avatarURL?: string,
     bio?: string,
     phone?: string,
     createdAt?: string,
@@ -15,12 +15,12 @@ export interface Friend {
   _id: string;
   username: string;
   displayName: string;
-  avatarUrl?: string;
+  avatarURL?: string;
 }
 
 export interface FriendRequest {
   id: string;
   username: string;
   displayName: string;
-  avatarUrl?: string;
+  avatarURL?: string;
 }

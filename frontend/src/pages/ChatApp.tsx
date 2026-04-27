@@ -19,14 +19,14 @@ const ChatApp = () => {
    
     <SidebarProvider>
       <AppSidebar />
-        <div className='block'>
+        {/* <div className='block'>
           ten nguoi dung
           {user?.username}
 
 
 
           <Logout />
-        </div>
+        </div> */}
       <div className="flex h-screen w-full p-2">
         <ChatWindowLayout />
       </div>
