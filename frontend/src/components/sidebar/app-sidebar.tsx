@@ -72,7 +72,7 @@ const {user} = useAuthStore()
 
 
 
-      <SidebarContent>
+      <SidebarContent className="beautiful-scollbar">
         {/* new chat */}
         <SidebarGroup>
           <SidebarGroupContent>

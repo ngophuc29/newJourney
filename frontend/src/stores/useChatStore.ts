@@ -37,7 +37,7 @@ export const useChatStore = create<ChatState>()(
       fetchMessages: async (conversationId) => {
         try {
           const { activeConversationId, messages } = get();
-          const { user } = useAuthStore();
+          const { user } = useAuthStore.getState();
 
           const convoId = conversationId ?? activeConversationId;
 

@@ -215,7 +215,7 @@
   }
 
   body {
-    @apply text-slate-800 dark:text-slate-200;
+    @apply text-slate-800 dark:text-slate-200 bg-background;
   }
 }
 
@@ -285,6 +285,10 @@
     box-shadow: var(--shadow-bubble);
   }
 
+  /* Scroll */
+  .beautiful-scrollbar{
+    @apply scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent dark:scrollbar-thumb-slate-600
+  }
   /* Animations */
   .transition-bounce {
     transition: var(--transition-bounce);
