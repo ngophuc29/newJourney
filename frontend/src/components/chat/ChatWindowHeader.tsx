@@ -7,10 +7,12 @@ import StatusBadge from './StatusBadge'
 import UserAvatar from './UserAvatar'
 import { Separator } from '@base-ui/react'
 import { useAuthStore } from '@/stores/useAuthStore'
+import { useSocketStore } from '@/stores/useSocketStore'
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     
     const { conversations, activeConversationId } = useChatStore()
+    const { onlineUsers } = useSocketStore()
     const { user } = useAuthStore();
     chat = chat ?? conversations.find((c) => c._id === activeConversationId)
     let otherUser;
@@ -48,11 +50,11 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                                   avatarURL={otherUser?.avatarURL || undefined}
                               />
                               {/* todo: socket io */}
-                              {/* <StatusBadge
+                              <StatusBadge
                                   status={
                                       onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"
                                   }
-                              /> */}
+                              />
                           </>
                       ) : (
                           <GroupChatAvatar

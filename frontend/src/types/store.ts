@@ -62,7 +62,7 @@ export interface ChatState {
 
 export interface SocketState {
   socket: Socket | null;
-  // onlineUsers: string[];
+  onlineUsers: string[];
   connectSocket: () => void;
   disconnectSocket: () => void;
 }

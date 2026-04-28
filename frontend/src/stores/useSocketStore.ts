@@ -6,7 +6,8 @@ import type { SocketState } from "@/types/store";
 const baseURL = import.meta.env.VITE_SOCKET_URL;
 
 export const useSocketStore = create<SocketState>((set, get) => ({
-  socket: null,
+    socket: null,
+    onlineUsers:[],
     connectSocket: () => {
       
         const accessToken = useAuthStore.getState().accessToken
@@ -25,6 +26,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         socket.on("connect", () => {
             console.log("Da ket noi voi socket");
             
+        })
+
+        //lang nghe online user tu be gui len
+        socket.on('online-users', (userIds) => {
+            set({onlineUsers:userIds})
         })
   },
     disconnectSocket: () => {
