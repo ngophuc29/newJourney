@@ -3,6 +3,7 @@ import http from "http"
 import express from 'express'
 import { log } from 'console'
 import { socketAuthMiddleware } from '../middlewares/socketMiddleware.js'
+import { getUserConversationsForSocketIO } from '../controllers/conversationController.js'
 
 const app = express()
 
@@ -30,13 +31,20 @@ io.on("connection", async (socket) => {
 
     io.emit("online-users", Array.from(onlineUsers.keys()))
 
-    socket.on("disconnect", () => {
-        onlineUsers.delete(user._id)
-        io.emit("online-users", Array.from(onlineUsers.keys()))
+    const conversationIds = await getUserConversationsForSocketIO(user._id)
 
-        console.log(`socket disconnected : ${socket.id}`);
-
-
+    conversationIds.forEach((id) => {
+        socket.join(id)
     })
+
+
+        socket.on("disconnect", () => {
+            onlineUsers.delete(user._id)
+            io.emit("online-users", Array.from(onlineUsers.keys()))
+
+            console.log(`socket disconnected : ${socket.id}`);
+
+
+        })
 })
 export { io, app, server }

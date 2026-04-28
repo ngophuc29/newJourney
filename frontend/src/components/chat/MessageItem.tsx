@@ -69,7 +69,7 @@ const MessageItem = ({
                             message.isOwn ? "bg-chat-bubble-sent border-0" : "bg-chat-bubble-received"
                         )}
                     >
-                        <p className="text-sm leading-relaxed break-words text-white ">{message.content}</p>
+                        <p className="text-sm leading-relaxed break-words ">{message.content}</p>
                     </Card>
                     {/* time */}
                     {isShowTime && (

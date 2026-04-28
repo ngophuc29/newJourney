@@ -157,3 +157,19 @@ export const getMessages = async (req, res) => {
 
     }
 }
+
+export const getUserConversationsForSocketIO = async (userId) => {
+    try {
+        const conversations = await Conversation.find({
+            "participant.userId":userId
+        }, {
+            _id:1
+        })
+        return conversations.map((c)=>c._id.toString())
+    } catch (error) {
+        console.log("Loi khi fetch conversation",error);
+        return []
+        
+    }
+    
+}
