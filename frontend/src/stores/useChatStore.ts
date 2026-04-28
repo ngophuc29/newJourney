@@ -62,27 +62,62 @@ export const useChatStore = create<ChatState>()(
           }));
 
           set((state) => {
-            const prev = state.messages[convoId]?.items ?? [] //lay tin cu
-            const merged = prev.length > 0 ? [...processed, ...prev] : processed// fetch them tin nhan moi ve
-            
+            const prev = state.messages[convoId]?.items ?? []; //lay tin cu
+            const merged =
+              prev.length > 0 ? [...processed, ...prev] : processed; // fetch them tin nhan moi ve
+
             return {
               messages: {
                 ...state.messages,
                 [convoId]: {
                   items: merged, // ds tin nhan sau khi merged
                   hasMore: !!cursor, // dua vao de bt co the con loading them tin nua k
-                  nextCursor : cursor ?? null
-                }
-              }
-            }
-            
-          })
+                  nextCursor: cursor ?? null,
+                },
+              },
+            };
+          });
         } catch (error) {
-          console.log("loi xay ra khi fetchMessages ",error);
+          console.log("loi xay ra khi fetchMessages ", error);
+        } finally {
+          set({ messasgeLoading: false });
+        }
+      },
+      sendDirectMessage: async (
+        recipientId,
+        content,
+        imgURL,
+        // conversationId,
+      ) => {
+        try {
+          const { activeConversationId } = get();
+
+          await chatService.sendDirectMessage(recipientId, content, imgURL, activeConversationId || undefined);
+
+          set((state) => ({
+            conversations: state.conversations.map((c) => c._id === activeConversationId ? { ...c, seenBy: [] } : c)
+            
+          }))
+        } catch (error) {
+          console.log("Loi xay ra khi gui tin nhan truc tiep",error);
           
         }
-        finally {
-          set({ messasgeLoading :false});
+      },
+      sendGroupMessage: async (conversationId, content, imgURL) => {
+        try {
+          await chatService.sendGroupMessage(
+          conversationId,  
+            content,
+            imgURL,
+          );
+           set((state) => ({
+             conversations: state.conversations.map(
+               (c) => (c._id === conversationId ? { ...c, seenBy: [] } : c),
+             ),
+           }));
+        } catch (error) {
+          console.log("Loi xay ra khi gui tin nhan nhom ", error);
+          
         }
       },
     }),
@@ -92,3 +127,4 @@ export const useChatStore = create<ChatState>()(
     },
   ),
 );
+// 2:01:47

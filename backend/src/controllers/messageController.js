@@ -18,7 +18,7 @@ export const sendDirectMessage = async (req,res) => {
         }
 
         // tim doan hoi thoai theo id
-        if (conversation) {
+        if (conversationId) {
             conversation = await Conversation.findById(conversationId)
         }
 

@@ -7,7 +7,7 @@ export interface AuthState {
   loading: boolean;
 
   clearState: () => void;
-setAccessToken:(accessToken:string)=>void
+  setAccessToken: (accessToken: string) => void;
   signUp: (
     username: string,
     password: string,
@@ -23,13 +23,11 @@ setAccessToken:(accessToken:string)=>void
   refreshToken: () => Promise<void>;
 }
 
-
 export interface ThemeStore {
-  isDarK: boolean,
-  toggleTheme: () => void,
-  setTheme : (dark : boolean)=>void
+  isDarK: boolean;
+  toggleTheme: () => void;
+  setTheme: (dark: boolean) => void;
 }
-
 
 export interface ChatState {
   conversations: Conversation[];
@@ -48,4 +46,15 @@ export interface ChatState {
   setActionConversation: (id: string | null) => void;
   fetchConversation: () => Promise<void>;
   fetchMessages: (conversationId?: string) => Promise<void>;
+  sendDirectMessage: (
+    recipientId: string,
+    content: string,
+    imgURL?: string,
+    conversationId?: string,
+  ) => Promise<void>;
+  sendGroupMessage: (
+    conversationId: string,
+    content: string,
+    imgURL?: string,
+  ) => Promise<void>;
 }
