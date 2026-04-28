@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import type { ConversationResponse, Message } from "@/types/chat";
+import { AlignVerticalJustifyEndIcon } from "lucide-react";
 
 interface FetchMessageProps {
   messages: Message[];
@@ -40,5 +41,9 @@ export const chatService = {
       imgURL
     });
     return res.data.message;
+  },
+  async markAsSeen(conversationId: string) {
+    const res = await api.patch(`/conversation/${conversationId}/seen`);
+    return res.data
   }
 };

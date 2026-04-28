@@ -1,17 +1,26 @@
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useChatStore } from '@/stores/useChatStore'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import ChatWelcomeScreen from './ChatWelcomeScreen'
 import MessageItem from './MessageItem'
 
 const ChatWindowBody = () => {
     const { activeConversationId, conversations, messages: allMessages } = useChatStore()
 
+    const [lastMessageStatus,setLastMessageStatus]= useState<'delivered'|'seen'>("delivered")
     const messages = allMessages[activeConversationId!]?.items ?? []
 
 
     const selectedConvo = conversations.find((c) => c._id === activeConversationId)
 
+    useEffect(() => {
+        const lastMessage = selectedConvo?.lastMessage
+        if (!lastMessage) return
+
+        const seenBy = selectedConvo?.seenBy ?? []
+        
+        setLastMessageStatus(seenBy.length>0 ? 'seen' :'delivered')
+    },[selectedConvo])
     if (!selectedConvo) {
         return <ChatWelcomeScreen />
     }
@@ -35,7 +44,7 @@ const ChatWindowBody = () => {
                         message={message}
                         messages={messages}
                         selectedConvo={selectedConvo}
-                        lastMessageStatus='delivered'
+                        lastMessageStatus={lastMessageStatus}
                     />
                 ))}
             </div>
