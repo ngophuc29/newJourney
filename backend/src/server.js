@@ -9,8 +9,9 @@ import conversationRoute from "./routes/conversationRoutes.js"
 import cookieParser from 'cookie-parser'
 import cors from "cors"
 import { protectedRoute } from "./middlewares/authMiddleware.js"
+import {app,server} from './socket/index.js'
 dotenv.config()
-const app = express()
+// const app = express()
 const PORT = process.env.PORT || 5001
 app.use(cors({
     origin: "http://localhost:5173",
@@ -35,7 +36,7 @@ app.use("/api/conversation", conversationRoute)
 
 connectDB()
 
-app.listen(PORT,() => {
+server.listen(PORT,() => {
     console.log(`RUN NEWJOURNEY PORT ${PORT}`);
 
 })

@@ -1,3 +1,4 @@
+import type { Socket } from "socket.io-client";
 import type { Conversation, Message } from "./chat";
 import type { User } from "./User";
 
@@ -57,4 +58,11 @@ export interface ChatState {
     content: string,
     imgURL?: string,
   ) => Promise<void>;
+}
+
+export interface SocketState {
+  socket: Socket | null;
+  // onlineUsers: string[];
+  connectSocket: () => void;
+  disconnectSocket: () => void;
 }
