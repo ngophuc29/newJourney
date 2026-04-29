@@ -124,3 +124,5 @@ const ChatWindowBody = () => {
 }
 
 export default ChatWindowBody
+
+// 30:08

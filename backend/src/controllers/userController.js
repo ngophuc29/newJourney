@@ -1,3 +1,4 @@
+import User from "../models/User.js"
 export const authme = async (req, res) => {
     
     try {
@@ -14,5 +15,23 @@ export const authme = async (req, res) => {
     
 }
 
-// Build Hệ Thống Xác Thực Người Dùng JWT | Dự án Moji(Phần 1)
-// 55:17
+export const searchUserbyUsername = async (req, res) => {
+    try {
+        const { username } = req.query
+        
+        if (!username || !username.trim() === "") {
+            return res.status(400).json({
+                message:"Can cung cap username"
+            })
+        }
+
+        const user = await User.findOne({ username }).select("_id displayName userName avatarURL")
+        
+        return res.status(200).json({
+            user
+        })
+    } catch (error) {
+        console.log("Lỗi khi searchUserByUsername", error);
+        return res.status(500).json({ message: "Lỗi hệ thống" })
+    }
+}

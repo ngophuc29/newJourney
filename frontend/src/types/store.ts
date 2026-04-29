@@ -73,3 +73,8 @@ export interface SocketState {
 }
 
  
+export interface FriendState {
+  loading: boolean;
+  searchByUsername: (username: string) => Promise<User | null>;
+  addFriend: (to: string, message?: string) => Promise<string>;
+}
