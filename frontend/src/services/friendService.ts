@@ -29,5 +29,9 @@ export const friendService = {
       console.log("Loi khi gui decline request");
     }
   },
+  async getFriendList() {
+    const res = await api.get('/friend/friends')
+    return res.data.friends
+  }
 };
 

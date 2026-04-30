@@ -68,7 +68,7 @@ export const createConversation = async (req, res) => {
             joinedAt: p.joinedAt,
         }));
         const formatted = { ...conversation.toObject(), participants };
-        return res.status(200).json({ conversation: formatted })
+        return res.status(201).json({ conversation: formatted })
     } catch (error) {
         console.log("loi khi tao conversation", error);
         return res.status(500).json({ message: "Loi he thong " })

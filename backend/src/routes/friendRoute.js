@@ -6,7 +6,7 @@ const router = express.Router()
 router.post("/requests", sendFriendRequest)
 router.post("/requests/:requestId/accept", acceptFriend)
 router.post("/requests/:requestId/decline", deniedFriend)
-router.get("/", getAllFriend)
+router.get("/friends", getAllFriend)
 router.get("/requests", getFriendRequest)
 router.get('/search', searchUserbyUsername)
 

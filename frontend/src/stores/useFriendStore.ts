@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 export const useFriendStore = create<FriendState>((set, get) => ({
   loading: false,
+  friends: [],
   receivedList: [],
   sentList: [],
   searchByUsername: async (username) => {
@@ -74,6 +75,21 @@ export const useFriendStore = create<FriendState>((set, get) => ({
       console.log("Loi xay ra khi decline request", error);
     } finally {
       set({ loading: false });
+    }
+  },
+  getFriends: async () => {
+    try {
+      set({ loading: true });
+
+      const friends = await friendService.getFriendList();
+      set({ friends: friends });
+    } catch (error) {
+      console.log("Loi xay ra khi lay danh sach ban be", error);
+      set({ friends: [] });
+    } finally {
+      set({
+        loading: false,
+      });
     }
   },
 }));
