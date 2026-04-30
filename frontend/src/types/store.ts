@@ -31,6 +31,7 @@ export interface ThemeStore {
 }
 
 export interface ChatState {
+  loading:boolean,
   conversations: Conversation[];
   messages: Record<
     string,
@@ -64,7 +65,11 @@ export interface ChatState {
   updateConversation: (conversation: unknown) => void;
   markAsSeen: () => Promise<void>;
   addConvo: (convo: Conversation) => void;
-  createConversation:(type:'direct'|'group',name:string ,memberIds:string [])=>Promise<void>
+  createConversation: (
+    type: "direct" | "group",
+    name: string,
+    memberIds: string[],
+  ) => Promise<void>;
 }
 
 export interface SocketState {

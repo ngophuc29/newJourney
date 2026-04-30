@@ -9,6 +9,7 @@ import { useSocketStore } from "./useSocketStore";
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
+      loading:false,
       conversations: [],
       messages: {},
       activeConversationId: null,
@@ -211,7 +212,8 @@ export const useChatStore = create<ChatState>()(
         })
       },
        createConversation:async (type, name, memberIds) =>{
-          try {
+         try {
+            set({loading:true})
             const conversation = await chatService.createConversation(type, name, memberIds);
             get().addConvo(conversation)
 
@@ -220,6 +222,8 @@ export const useChatStore = create<ChatState>()(
           } catch (error) {
             console.log("Loi xay ra khi goi create conversation trong store");
             
+         } finally {
+           set({loading:false})
           }
       },
     }),
