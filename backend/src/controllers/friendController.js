@@ -171,14 +171,14 @@ export const getFriendRequest = async (req, res) => {
 
         const populateFields = '_id username displayName avatarURL'
         
-        const [sent, receive] = await Promise.all([
+        const [sent, received] = await Promise.all([
             FriendRequest.find({ from: userId }).populate('to', populateFields),// loi moi gui di 
             FriendRequest.find({ to: userId }).populate('from', populateFields),// loi moi nhan duoc
         ])
 
-        return res.status(200).json({sent,receive})
+        return res.status(200).json({sent,received})
     } catch (error) {
-        console.log("Loi khi lay danh sach loi moi ket ban");
+        console.log("Loi khi lay danh sach loi moi ket ban",error);
         return res.status(500).json({ message: "Loi he thong" })
 
     }
