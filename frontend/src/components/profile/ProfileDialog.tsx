@@ -17,7 +17,7 @@ const ProfileDialog = ({ open, setOpen }: ProfileDialogProps) => {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="overflow-y-auto max-h-[95vh] max-w-5xl w-full p-0 bg-background rounded-2xl border shadow-xl">
+            <DialogContent className="overflow-y-auto max-h-[95vh] max-w-5xl w-full p-0 bg-background rounded-2xl border-none shadow-xl">
 
                 <div className="p-6">
                     {/* Header */}
@@ -30,54 +30,52 @@ const ProfileDialog = ({ open, setOpen }: ProfileDialogProps) => {
                     {/* Profile */}
                     <ProfileCard user={user} />
 
-                    {/* Tabs */}
-                    <Tabs defaultValue="personal" className="mt-6">
-                        <div className="grid grid-cols-4 gap-6">
+                    {/* Tabs - ✅ Ép flex-col để chia trên/dưới */}
+                    <Tabs defaultValue="personal" className="flex flex-col w-full mt-6">
 
-                            {/* ✅ Sidebar (vẫn dùng TabsList) */}
-                            <TabsList className="col-span-1 flex flex-col h-fit bg-muted/40 rounded-xl p-2 space-y-1">
+                        {/* ✅ Ép flex-row, w-full và h-auto để chống bị bóp méo */}
+                        <TabsList className="flex flex-row w-full h-auto p-1.5 bg-muted rounded-2xl mb-4">
 
-                                <TabsTrigger
-                                    value="personal"
-                                    className="w-full justify-start px-4 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white"
-                                >
-                                    Tài Khoản
-                                </TabsTrigger>
+                            <TabsTrigger
+                                value="personal"
+                                className="flex-1 rounded-xl py-2.5 text-sm font-medium text-muted-foreground transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                Tài Khoản
+                            </TabsTrigger>
 
-                                <TabsTrigger
-                                    value="preferences"
-                                    className="w-full justify-start px-4 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white"
-                                >
-                                    Cấu Hình
-                                </TabsTrigger>
+                            <TabsTrigger
+                                value="preferences"
+                                className="flex-1 rounded-xl py-2.5 text-sm font-medium text-muted-foreground transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                Cấu Hình
+                            </TabsTrigger>
 
-                                <TabsTrigger
-                                    value="privacy"
-                                    className="w-full justify-start px-4 py-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white"
-                                >
-                                    Bảo Mật
-                                </TabsTrigger>
+                            <TabsTrigger
+                                value="privacy"
+                                className="flex-1 rounded-xl py-2.5 text-sm font-medium text-muted-foreground transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                            >
+                                Bảo Mật
+                            </TabsTrigger>
 
-                            </TabsList>
+                        </TabsList>
 
-                            {/* ✅ Content */}
-                            <div className="col-span-3 bg-background rounded-xl p-6 border shadow-sm">
+                        {/* ✅ Content nằm dưới */}
+                        <div className="w-full bg-background rounded-2xl p-6 border-none shadow-sm">
 
-                                <TabsContent value="personal">
-                                    <PersonalInfoForm userInfo={user} />
-                                </TabsContent>
+                            <TabsContent value="personal" className="mt-0 outline-none">
+                                <PersonalInfoForm userInfo={user} />
+                            </TabsContent>
 
-                                <TabsContent value="preferences">
-                                    <PreferencesForm />
-                                </TabsContent>
+                            <TabsContent value="preferences" className="mt-0 outline-none">
+                                <PreferencesForm />
+                            </TabsContent>
 
-                                <TabsContent value="privacy">
-                                    <PrivacySettings />
-                                </TabsContent>
-
-                            </div>
+                            <TabsContent value="privacy" className="mt-0 outline-none">
+                                <PrivacySettings />
+                            </TabsContent>
 
                         </div>
+
                     </Tabs>
                 </div>
             </DialogContent>
