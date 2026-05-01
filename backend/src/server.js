@@ -9,7 +9,8 @@ import conversationRoute from "./routes/conversationRoutes.js"
 import cookieParser from 'cookie-parser'
 import cors from "cors"
 import { protectedRoute } from "./middlewares/authMiddleware.js"
-import {app,server} from './socket/index.js'
+import { app, server } from './socket/index.js'
+import { v2 as cloudinary} from 'cloudinary'
 dotenv.config()
 // const app = express()
 const PORT = process.env.PORT || 5001
@@ -22,7 +23,11 @@ app.use(express.json())
 app.use(cookieParser())
 // giup express hieu va doc dc request body
 // duoi dang json
-
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 //public routes
 app.use('/api/auth', authRoutes)
 // private routes

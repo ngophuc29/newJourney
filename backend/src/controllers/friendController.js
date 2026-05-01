@@ -90,14 +90,14 @@ export const acceptFriend = async (req, res) => {
 
         await FriendRequest.findByIdAndDelete(requestId)
 
-        const from = await User.findById(request.from).select("_id displayName avatarUrl").lean()
+        const from = await User.findById(request.from).select("_id displayName avatarURL").lean()
 
         return res.status(201).json({
             message: "Chap nhan loi moi ket ban thanh cong",
             newFriend: {
                 _id: from?._id,
                 displayName: from?.displayName,
-                avatarUrl: from?.avatarURL
+                avatarURL: from?.avatarURL
             }
         })
 

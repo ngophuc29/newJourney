@@ -25,6 +25,7 @@ import { ChevronsUpDownIcon, SparklesIcon, BadgeCheckIcon, CreditCardIcon, BellI
 import Logout from "../auth/Logout"
 import { useState } from "react"
 import FriendRequestDialog from "../friendRequest/FriendRequestDialog"
+import ProfileDialog from "../profile/ProfileDialog"
 
 export function NavUser({
   user,
@@ -33,7 +34,9 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const [friendRequestOpen, setfriendRequestOpen] = useState(false);
+  const [profileOpen, setprofileOpen] = useState(false);
   return (
+
     <>
       <SidebarMenu>
         <SidebarMenuItem>
@@ -77,7 +80,9 @@ export function NavUser({
 
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                onClick={()=>setprofileOpen(true)}
+                >
                   <UserIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground"
                   />
                   Tai khoan
@@ -108,6 +113,13 @@ export function NavUser({
         setOpen={setfriendRequestOpen}
       
       />
+
+      <ProfileDialog
+        open={profileOpen}
+        setOpen={setprofileOpen}
+      />
+
+
     </>
   )
 }

@@ -15,11 +15,14 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (accessToken) => {
         set({ accessToken });
       },
+      setUser: (user) => {
+        set({ user });
+      },
       clearState: () => {
         set({ accessToken: null, user: null, loading: false });
         useChatStore.getState().reset();
         localStorage.clear();
-        sessionStorage.clear()
+        sessionStorage.clear();
       },
       signUp: async (username, password, email, firstName, lastName) => {
         try {
@@ -44,8 +47,7 @@ export const useAuthStore = create<AuthState>()(
       },
       signIn: async (username, password) => {
         try {
-
-          get().clearState()
+          get().clearState();
           set({ loading: true });
           // localStorage.clear();
           // useChatStore.getState().reset();
@@ -58,7 +60,7 @@ export const useAuthStore = create<AuthState>()(
 
           await get().fetchMe();
 
-          useChatStore.getState().fetchConversation()
+          useChatStore.getState().fetchConversation();
           console.log("useAuthStore: set accessToken", accessToken);
           toast.success("Dang nhap thanh cong ! Ban se chuyen sang trang chat");
         } catch (error) {

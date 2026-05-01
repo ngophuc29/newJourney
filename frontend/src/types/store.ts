@@ -6,7 +6,7 @@ export interface AuthState {
   accessToken: string | null;
   user: User | null;
   loading: boolean;
-
+  setUser: (user: User) => void;
   clearState: () => void;
   setAccessToken: (accessToken: string) => void;
   signUp: (
@@ -31,7 +31,7 @@ export interface ThemeStore {
 }
 
 export interface ChatState {
-  loading:boolean,
+  loading: boolean;
   conversations: Conversation[];
   messages: Record<
     string,
@@ -79,9 +79,8 @@ export interface SocketState {
   disconnectSocket: () => void;
 }
 
- 
 export interface FriendState {
-  friends:Friend[]
+  friends: Friend[];
   loading: boolean;
   receivedList: FriendRequest[];
   sentList: FriendRequest[];
@@ -90,5 +89,9 @@ export interface FriendState {
   getAllFriendRequests: () => Promise<void>;
   acceptFriendRequest: (requestId: string) => Promise<void>;
   declineFriendRequest: (requestId: string) => Promise<void>;
-  getFriends :() =>Promise<void>
+  getFriends: () => Promise<void>;
+}
+
+export interface UserState {
+  updateAvatarUrl: (formData: FormData) => Promise<void>;
 }

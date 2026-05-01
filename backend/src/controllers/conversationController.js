@@ -64,7 +64,7 @@ export const createConversation = async (req, res) => {
         const participants = (conversation.participant || []).map((p) => ({
             _id: p.userId?._id,
             displayName: p.userId?.displayName,
-            avatarUrl: p.userId?.avatarURL ?? null,
+            avatarURL: p.userId?.avatarURL ?? null,
             joinedAt: p.joinedAt,
         }));
         const formatted = { ...conversation.toObject(), participants };
