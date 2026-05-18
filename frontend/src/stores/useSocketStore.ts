@@ -1,19 +1,33 @@
 import { create } from "zustand";
 import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
-import type { SocketState } from "@/types/store";
 import { useChatStore } from "./useChatStore";
+import type { SocketState } from "@/types/store";
+import type { Conversation, Message } from "@/types/chat";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL;
+
+type NewMessagePayload = {
+  message: Message;
+  conversation: Conversation;
+  unreadCounts: Record<string, number>;
+};
+
+type ReadMessagePayload = {
+  conversation: Conversation;
+  lastMessage: Conversation["lastMessage"];
+};
 
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
   onlineUsers: [],
+
   connectSocket: () => {
     const accessToken = useAuthStore.getState().accessToken;
     const existingSocket = get().socket;
 
-    if (existingSocket) return; // return som de tranh tao nhieu socket trung nhau
+    // ✅ tránh tạo nhiều socket
+    if (existingSocket) return;
 
     const socket: Socket = io(baseURL, {
       auth: { token: accessToken },
@@ -22,35 +36,36 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     set({ socket });
 
+    // =========================
+    // ✅ CONNECT
+    // =========================
     socket.on("connect", () => {
-      console.log("Da ket noi voi socket");
+      console.log("✅ Socket connected");
     });
 
-    //lang nghe online user tu be gui len
-    socket.on("online-users", (userIds) => {
+    // =========================
+    // ✅ ONLINE USERS
+    // =========================
+    socket.on("online-users", (userIds: string[]) => {
       set({ onlineUsers: userIds });
     });
 
-    // lang nghe new message
-    socket.on("new-message", ({ message, conversation, unreadCounts }) => {
-      useChatStore.getState().addMessage(message);
-      const lastMessage = {
-        _id: conversation.lastMessage._id,
-        content: conversation.lastMessage.content,
-        createdAt: conversation.lastMessage.createdAt,
-        senderId: {
-          _id: conversation.lastMessage.senderId,
-          displayName: "",
-          avatarURL: null,
-        },
-      };
+    // =========================
+    // ✅ NEW MESSAGE
+    // =========================
+    socket.on("new-message", (data: NewMessagePayload) => {
+      const { message, conversation, unreadCounts } = data;
 
-      const updatedConversation = {
+      // thêm message vào store
+      useChatStore.getState().addMessage(message);
+
+      // ❗ KHÔNG build lại lastMessage → dùng từ backend
+      const updatedConversation: Conversation = {
         ...conversation,
-        lastMessage,
         unreadCounts,
       };
 
+      // nếu đang mở convo thì mark seen
       if (
         useChatStore.getState().activeConversationId === message.conversationId
       ) {
@@ -60,28 +75,34 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useChatStore.getState().updateConversation(updatedConversation);
     });
 
-    // read message
-    socket.on("read-message", ({ conversation, lastMessage }) => {
-      const updated = {
-        _id: conversation._id,
-        lastMessage,
-        lastMessageAt: conversation.lastMessageAt,
-        unreadCounts: conversation.unreadCounts,
-        seenBy: conversation.seenBy,
+    // =========================
+    // ✅ READ MESSAGE
+    // =========================
+    socket.on("read-message", (data: ReadMessagePayload) => {
+      const { conversation, lastMessage } = data;
+
+      const updated: Conversation = {
+        ...conversation,
+        lastMessage, // backend đã đúng type
       };
+
       useChatStore.getState().updateConversation(updated);
     });
 
+    // =========================
+    // ✅ NEW GROUP
+    // =========================
+    socket.on("new-group", (conversation: Conversation) => {
+      useChatStore.getState().addConvo(conversation);
 
-    // new group
-
-    socket.on('new-group', (conversation) => {
-      useChatStore.getState().addConvo(conversation)
-      socket.emit('join-conversation',conversation._id)
-    })
+      // join room ngay sau khi tạo
+      socket.emit("join-conversation", conversation._id);
+    });
   },
+
   disconnectSocket: () => {
     const socket = get().socket;
+
     if (socket) {
       socket.disconnect();
       set({ socket: null });

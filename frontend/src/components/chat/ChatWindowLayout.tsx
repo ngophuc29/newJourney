@@ -8,7 +8,7 @@ import ChatWindowBody from './ChatWindowBody'
 import MessageInput from './MessageInput'
 
 const ChatWindowLayout = () => {
-  const { activeConversationId, conversations, messasgeLoading: loading, messages, markAsSeen } = useChatStore()
+  const { activeConversationId, conversations, messasgeLoading: loading, markAsSeen } = useChatStore()
 
 
   const selectedConvo =
