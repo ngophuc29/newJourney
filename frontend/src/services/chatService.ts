@@ -1,6 +1,5 @@
 import api from "@/lib/axios";
 import type { ConversationResponse, Message } from "@/types/chat";
-import { AlignVerticalJustifyEndIcon } from "lucide-react";
 
 interface FetchMessageProps {
   messages: Message[];

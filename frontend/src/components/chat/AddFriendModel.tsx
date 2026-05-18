@@ -4,8 +4,7 @@ import { UserPlus } from "lucide-react";
 import type { User } from "@/types/User";
 import { useFriendStore } from "@/stores/useFriendStore";
 import { useForm } from "react-hook-form";
-import { data } from "react-router";
-import { da } from "zod/v4/locales";
+ 
 import { toast } from "sonner";
 import SearchForm from "../AddFriendModel/SearchForm";
 import SendFriendRequestForm from "../AddFriendModel/SendFriendRequestForm";

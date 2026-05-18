@@ -1,8 +1,7 @@
 import React from 'react'
 import { Card } from "@/components/ui/card"
-import { formatOnlineTime, cn, formatMessageTime } from '@/lib/utils'
+import { formatOnlineTime, cn } from '@/lib/utils'
 import {  MoreHorizontal } from 'lucide-react';
-import { UNSAFE_RSCDefaultRootErrorBoundary } from 'react-router';
 
 interface ChatCardProps {
     convoId: string,

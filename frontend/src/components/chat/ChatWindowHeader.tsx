@@ -1,6 +1,6 @@
 import { useChatStore } from '@/stores/useChatStore'
 import type { Conversation } from '@/types/chat'
-import React from 'react'
+ 
 import { SidebarTrigger } from '../ui/sidebar'
 import GroupChatAvatar from './GroupChatAvatar'
 import StatusBadge from './StatusBadge'

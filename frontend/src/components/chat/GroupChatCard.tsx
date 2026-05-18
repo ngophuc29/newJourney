@@ -2,7 +2,7 @@ import type { Conversation } from '@/types/chat'
 import ChatCard from './ChatCard'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useChatStore } from '@/stores/useChatStore'
-import { cn } from '@/lib/utils'
+ 
 import GroupChatAvatar from './GroupChatAvatar'
 import UnreadCountBadge from './UnreadCountBadge'
 const GroupChatCard = ({ convo }: { convo: Conversation }) => {

@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Group, Moon, Sun } from "lucide-react"
+import {  Moon, Sun } from "lucide-react"
 import { Switch } from "../ui/switch"
 import CreateNewChat from "../chat/CreateNewChat"
 import NewGroupChatModel from "../chat/NewGroupChatModel"

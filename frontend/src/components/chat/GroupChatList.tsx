@@ -1,7 +1,6 @@
-import React from 'react'
+ 
 import { useChatStore } from '@/stores/useChatStore'
-import type { Conversation } from '@/types/chat'
-import DirectMessageCard from './DirectMessageCard'
+ 
 import GroupChatCard from './GroupChatCard'
 
 const GroupChatList = () => {

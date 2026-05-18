@@ -1,15 +1,15 @@
 import { chatService } from "@/services/chatService";
 import type { ChatState } from "@/types/store";
-import { set } from "zod";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useAuthStore } from "./useAuthStore";
 import { useSocketStore } from "./useSocketStore";
+import type { Conversation } from "@/types/chat";
 
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
-      loading:false,
+      loading: false,
       conversations: [],
       messages: {},
       activeConversationId: null,
@@ -157,74 +157,82 @@ export const useChatStore = create<ChatState>()(
           console.log("Loi xay ra khi add message");
         }
       },
-      updateConversation: (conversation) => {
+      updateConversation: (conversation: Conversation) => {
         set((state) => ({
           conversations: state.conversations.map((c) =>
             c._id === conversation._id ? { ...c, ...conversation } : c,
           ),
         }));
       },
-      markAsSeen: async () =>{
-          try {
-            const { user } = useAuthStore.getState()
-                      
-            const { activeConversationId, conversations } = get();
-            
-            if (!user || !activeConversationId) {
-              return
-            }
+      markAsSeen: async () => {
+        try {
+          const { user } = useAuthStore.getState();
 
-            const convo = conversations.find((c) => c._id === activeConversationId)
-            if (!convo) return
-            if ((convo.unreadCounts?.[user._id] ?? 0) === 0) {
-              return 
-            }
+          const { activeConversationId, conversations } = get();
 
-            await chatService.markAsSeen(activeConversationId);
-
-            set((state) => ({
-              conversations: state.conversations.map((c) =>
-                c._id === activeConversationId && c.lastMessage
-                  ? {
-                      ...c,
-                      unreadCounts: {
-                        ...c.unreadCounts,
-                        [user._id]: 0,
-                      },
-                    }
-                  : c,
-              ),
-            }));
-          } catch (error) {
-            console.log("loi xay ra khi goi mark as seen" ,error);
-            
+          if (!user || !activeConversationId) {
+            return;
           }
+
+          const convo = conversations.find(
+            (c) => c._id === activeConversationId,
+          );
+          if (!convo) return;
+          if ((convo.unreadCounts?.[user._id] ?? 0) === 0) {
+            return;
+          }
+
+          await chatService.markAsSeen(activeConversationId);
+
+          set((state) => ({
+            conversations: state.conversations.map((c) =>
+              c._id === activeConversationId && c.lastMessage
+                ? {
+                    ...c,
+                    unreadCounts: {
+                      ...c.unreadCounts,
+                      [user._id]: 0,
+                    },
+                  }
+                : c,
+            ),
+          }));
+        } catch (error) {
+          console.log("loi xay ra khi goi mark as seen", error);
+        }
       },
       addConvo: (convo) => {
-        
         set((state) => {
-          const exists = state.conversations.some((c) => c._id.toString() === convo._id.toString())
-          
-          return {
-            conversations: exists ? state.conversations : [convo, ...state.conversations],
-            activeConversationId:convo._id
-          }
-        })
-      },
-       createConversation:async (type, name, memberIds) =>{
-         try {
-            set({loading:true})
-            const conversation = await chatService.createConversation(type, name, memberIds);
-            get().addConvo(conversation)
+          const exists = state.conversations.some(
+            (c) => c._id.toString() === convo._id.toString(),
+          );
 
-            useSocketStore.getState().socket?.emit('join-conversation', conversation._id)
-            
-          } catch (error) {
-            console.log("Loi xay ra khi goi create conversation trong store");
-            
-         } finally {
-           set({loading:false})
-          }
+          return {
+            conversations: exists
+              ? state.conversations
+              : [convo, ...state.conversations],
+            activeConversationId: convo._id,
+          };
+        });
+      },
+      createConversation: async (type, name, memberIds) => {
+        try {
+          set({ loading: true });
+          const conversation = await chatService.createConversation(
+            type,
+            name,
+            memberIds,
+          );
+          get().addConvo(conversation);
+
+          useSocketStore
+            .getState()
+            .socket?.emit("join-conversation", conversation._id);
+        } catch (error) {
+          console.log("Loi xay ra khi goi create conversation trong store");
+        } finally {
+          set({ loading: false });
+        }
       },
     }),
     {

@@ -1,6 +1,6 @@
-import { useAuthStore } from '@/stores/useAuthStore'
+ 
 import { useChatStore } from '@/stores/useChatStore'
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import ChatWelcomeScreen from './ChatWelcomeScreen'
 import MessageItem from './MessageItem'
 import InfiniteScroll from 'react-infinite-scroll-component'
