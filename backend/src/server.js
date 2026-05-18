@@ -16,21 +16,23 @@ dotenv.config()
 const PORT = process.env.PORT || 5001
 const allowedOrigins = [
     "http://localhost:5173",
-    "https://new-journey-j9q5.vercel.app",
+    process.env.FRONTEND_URL || "https://new-journey-j9q5.vercel.app",
 ];
 
 app.use(
     cors({
         origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("CORS not allowed"));
+            // Allow requests with no origin (e.g. server-to-server, curl)
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin)) {
+                return callback(null, true);
             }
+            // Deny other origins but don't throw so CORS middleware will simply not set headers
+            return callback(null, false);
         },
         credentials: true,
     })
-); redentials: true
+);
  
 // middlewares
 app.use(express.json())
