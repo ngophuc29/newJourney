@@ -14,10 +14,24 @@ import { v2 as cloudinary} from 'cloudinary'
 dotenv.config()
 // const app = express()
 const PORT = process.env.PORT || 5001
-app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true
-}))
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://new-journey-j9q5.vercel.app",
+];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("CORS not allowed"));
+            }
+        },
+        credentials: true,
+    })
+); redentials: true
+ 
 // middlewares
 app.use(express.json())
 app.use(cookieParser())
