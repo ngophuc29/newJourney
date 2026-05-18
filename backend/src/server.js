@@ -27,7 +27,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 // Ensure preflight requests are handled for all routes
-app.options("*", cors(corsOptions));
+// Use '/*' to avoid path-to-regexp errors when registering an options handler
+app.options("/*", cors(corsOptions));
  
 // middlewares
 app.use(express.json())
