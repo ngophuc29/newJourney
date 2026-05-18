@@ -19,28 +19,10 @@ dotenv.config();
 const PORT = process.env.PORT || 5001;
 
 /* ================= CORS ================= */
-const allowedOrigins = [
-    "http://localhost:5173",
-    "https://new-journey-j9q5.vercel.app",
-];
-
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            console.log("🌍 Origin:", origin);
-
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            } else {
-                callback(new Error("❌ Not allowed by CORS"));
-            }
-        },
-        credentials: true,
-    })
-);
-
-// 🔥 VERY IMPORTANT (fix preflight)
-app.options("*", cors());
+app.use(cors({
+    origin: true,
+    credentials: true,
+}));
 
 /* ================= MIDDLEWARE ================= */
 app.use(express.json());

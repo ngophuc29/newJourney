@@ -10,10 +10,7 @@ const server = http.createServer(app);
 /* ================= SOCKET CORS ================= */
 const io = new Server(server, {
     cors: {
-        origin: [
-            "http://localhost:5173",
-            "https://new-journey-j9q5.vercel.app",
-        ],
+        origin: true,        // 🔥 PASS ALL
         credentials: true,
     },
 });
