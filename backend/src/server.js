@@ -19,20 +19,15 @@ const allowedOrigins = [
     process.env.FRONTEND_URL || "https://new-journey-j9q5.vercel.app",
 ];
 
-app.use(
-    cors({
-        origin: (origin, callback) => {
-            // Allow requests with no origin (e.g. server-to-server, curl)
-            if (!origin) return callback(null, true);
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-            // Deny other origins but don't throw so CORS middleware will simply not set headers
-            return callback(null, false);
-        },
-        credentials: true,
-    })
-);
+const corsOptions = {
+    origin: allowedOrigins,
+    credentials: true,
+    optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+// Ensure preflight requests are handled for all routes
+app.options("*", cors(corsOptions));
  
 // middlewares
 app.use(express.json())
