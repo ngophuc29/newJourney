@@ -36,6 +36,15 @@ cloudinary.config({
 });
 
 /* ================= ROUTES ================= */
+app.get("/api/health", (req, res) => {
+    console.log(`[health] ${new Date().toISOString()} server is online`);
+    return res.status(200).json({
+        ok: true,
+        message: "server is online",
+        timestamp: new Date().toISOString(),
+    });
+});
+
 // public
 app.use("/api/auth", authRoutes);
 
