@@ -3,7 +3,7 @@ import   { useEffect, useState } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 
 const ProtectedRoute = () => {
-  const { accessToken, user, loading, refreshToken, fetchMe } = useAuthStore()
+  const { accessToken, loading, refreshToken, fetchMe } = useAuthStore()
   const [starting, setStarting] = useState(true)
 
   const init = async () => {
