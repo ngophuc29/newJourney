@@ -1,9 +1,13 @@
+# Dependencies
 node_modules/
-.env
+
+# Env files
+.env*
 !.env.example
+
+# Config
 jsconfig.json
 
-# REACT
 # Logs
 logs
 *.log
@@ -13,7 +17,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
+# Build output
 dist
 dist-ssr
 *.local
