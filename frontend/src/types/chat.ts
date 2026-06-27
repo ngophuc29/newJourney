@@ -50,7 +50,22 @@ export interface Message {
   senderId: string;
   content: string | null;
   imgUrl?: string | null;
+  imageUrl?: string | null;
+  mediaUrl?: string | null;
+  mediaType?: "image" | "video" | null;
+  mediaPublicId?: string | null;
+  type?: "user" | "system";
+  systemType?: string | null;
+  reactions?: MessageReaction[];
+  isRevoked?: boolean;
+  revokedAt?: string | null;
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+}
+
+export interface MessageReaction {
+  userId: string;
+  emoji: string;
+  _id?: string;
 }

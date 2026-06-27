@@ -2,8 +2,11 @@ import { create } from "zustand";
 import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import { useChatStore } from "./useChatStore";
+import { useFriendStore } from "./useFriendStore";
 import type { SocketState } from "@/types/store";
-import type { Conversation, Message } from "@/types/chat";
+import type { Conversation, Message, MessageReaction } from "@/types/chat";
+import type { Friend, FriendRequest } from "@/types/User";
+import { toast } from "sonner";
 
 const baseURL = import.meta.env.VITE_SOCKET_URL;
 
@@ -18,6 +21,40 @@ type ReadMessagePayload = {
   lastMessage: Conversation["lastMessage"];
 };
 
+type MessageReactionUpdatedPayload = {
+  messageId: string;
+  conversationId: string;
+  reactions: MessageReaction[];
+};
+
+type MessageRevokedPayload = {
+  messageId: string;
+  conversationId: string;
+  revokedAt?: string | null;
+};
+
+type FriendRequestPayload = {
+  request: FriendRequest;
+};
+
+type FriendRequestAcceptedPayload = {
+  requestId: string;
+  friend: Friend;
+};
+
+type FriendRequestDeclinedPayload = {
+  requestId: string;
+  userId: string;
+};
+
+type FriendRemovedPayload = {
+  friendId: string;
+};
+
+type GroupRemovedPayload = {
+  conversationId: string;
+};
+
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
   onlineUsers: [],
@@ -26,7 +63,6 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     const accessToken = useAuthStore.getState().accessToken;
     const existingSocket = get().socket;
 
-    // ✅ tránh tạo nhiều socket
     if (existingSocket) return;
 
     const socket: Socket = io(baseURL, {
@@ -36,36 +72,26 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     set({ socket });
 
-    // =========================
-    // ✅ CONNECT
-    // =========================
     socket.on("connect", () => {
-      console.log("✅ Socket connected");
+      console.log("Socket connected");
     });
 
-    // =========================
-    // ✅ ONLINE USERS
-    // =========================
     socket.on("online-users", (userIds: string[]) => {
       set({ onlineUsers: userIds });
     });
 
-    // =========================
-    // ✅ NEW MESSAGE
-    // =========================
     socket.on("new-message", (data: NewMessagePayload) => {
       const { message, conversation, unreadCounts } = data;
 
-      // thêm message vào store
       useChatStore.getState().addMessage(message);
 
-      // ❗ KHÔNG build lại lastMessage → dùng từ backend
       const updatedConversation: Conversation = {
         ...conversation,
         unreadCounts,
       };
 
-      // nếu đang mở convo thì mark seen
+      socket.emit("join-conversation", conversation._id);
+
       if (
         useChatStore.getState().activeConversationId === message.conversationId
       ) {
@@ -75,28 +101,119 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       useChatStore.getState().updateConversation(updatedConversation);
     });
 
-    // =========================
-    // ✅ READ MESSAGE
-    // =========================
     socket.on("read-message", (data: ReadMessagePayload) => {
       const { conversation, lastMessage } = data;
 
       const updated: Conversation = {
         ...conversation,
-        lastMessage, // backend đã đúng type
+        lastMessage,
       };
 
       useChatStore.getState().updateConversation(updated);
     });
 
-    // =========================
-    // ✅ NEW GROUP
-    // =========================
+    socket.on(
+      "message-reaction-updated",
+      ({ conversationId, messageId, reactions }: MessageReactionUpdatedPayload) => {
+        useChatStore
+          .getState()
+          .updateMessageReactions(conversationId, messageId, reactions);
+      },
+    );
+
+    socket.on(
+      "message-revoked",
+      ({ conversationId, messageId, revokedAt }: MessageRevokedPayload) => {
+        useChatStore
+          .getState()
+          .markMessageRevoked(conversationId, messageId, revokedAt);
+      },
+    );
+
     socket.on("new-group", (conversation: Conversation) => {
       useChatStore.getState().addConvo(conversation);
-
-      // join room ngay sau khi tạo
       socket.emit("join-conversation", conversation._id);
+      toast.info(`Ban da duoc them vao nhom ${conversation.group?.name ?? ""}`);
+    });
+
+    socket.on("group-updated", (conversation: Conversation) => {
+      const existed = useChatStore
+        .getState()
+        .conversations.some((c) => c._id === conversation._id);
+
+      useChatStore.getState().updateConversation(conversation);
+      socket.emit("join-conversation", conversation._id);
+
+      if (!existed) {
+        toast.info(
+          `Ban da duoc them vao nhom ${conversation.group?.name ?? ""}`,
+        );
+      }
+    });
+
+    socket.on("group-removed", ({ conversationId }: GroupRemovedPayload) => {
+      socket.emit("leave-conversation", conversationId);
+      useChatStore.getState().removeConversation(conversationId);
+    });
+
+    socket.on("friend-request-received", ({ request }: FriendRequestPayload) => {
+      useFriendStore.getState().addReceivedRequest(request);
+      toast.info(
+        `${request.from?.displayName || request.from?.username || "Ai do"} da gui loi moi ket ban`,
+      );
+    });
+
+    socket.on("friend-request-sent", ({ request }: FriendRequestPayload) => {
+      useFriendStore.getState().addSentRequest(request);
+    });
+
+    socket.on(
+      "friend-request-accepted",
+      ({ requestId, friend }: FriendRequestAcceptedPayload) => {
+        const friendStore = useFriendStore.getState();
+
+        friendStore.removeRequest(requestId);
+        friendStore.addFriendToList(friend);
+        friendStore.removeSuggestedUser(friend._id);
+        toast.success(
+          `${friend.displayName || friend.username} da chap nhan loi moi ket ban`,
+        );
+      },
+    );
+
+    socket.on(
+      "friend-request-accepted-self",
+      ({ requestId, friend }: FriendRequestAcceptedPayload) => {
+        const friendStore = useFriendStore.getState();
+
+        friendStore.removeRequest(requestId);
+        friendStore.addFriendToList(friend);
+        friendStore.removeSuggestedUser(friend._id);
+      },
+    );
+
+    socket.on(
+      "friend-request-declined",
+      ({ requestId, userId }: FriendRequestDeclinedPayload) => {
+        const friendStore = useFriendStore.getState();
+
+        friendStore.removeRequest(requestId);
+        friendStore.updateSuggestionStatus(userId, null);
+      },
+    );
+
+    socket.on(
+      "friend-request-declined-self",
+      ({ requestId, userId }: FriendRequestDeclinedPayload) => {
+        const friendStore = useFriendStore.getState();
+
+        friendStore.removeRequest(requestId);
+        friendStore.updateSuggestionStatus(userId, null);
+      },
+    );
+
+    socket.on("friend-removed", ({ friendId }: FriendRemovedPayload) => {
+      useFriendStore.getState().removeFriendFromList(friendId);
     });
   },
 

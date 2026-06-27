@@ -26,7 +26,7 @@ export const searchUserbyUsername = async (req, res) => {
             })
         }
 
-        const user = await User.findOne({ username }).select("_id displayName userName avatarURL")
+        const user = await User.findOne({ username }).select("_id username displayName avatarURL")
         
         return res.status(200).json({
             user

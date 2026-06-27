@@ -26,18 +26,38 @@ export const chatService = {
     return {messages:res.data.messages, cursor:res.data.nextCursor}
 
   },
-  async sendDirectMessage(recipientId: string, content: string = "", imgURL?: string, conversationId?: string) {
+  async sendDirectMessage(recipientId: string, content: string = "", mediaFile?: File, conversationId?: string) {
+    if (mediaFile) {
+      const formData = new FormData();
+      formData.append("recipientId", recipientId);
+      formData.append("content", content);
+      formData.append("file", mediaFile);
+      if (conversationId) formData.append("conversationId", conversationId);
+
+      const res = await api.post("/message/direct", formData);
+      return res.data.message;
+    }
+
     const res = await api.post('/message/direct', {
-      recipientId,content,imgURL,conversationId
+      recipientId,content,conversationId
     })
     return res.data.message
   },
-  async sendGroupMessage(conversationId?: string, content: string = "", imgURL?: string) {
+  async sendGroupMessage(conversationId?: string, content: string = "", mediaFile?: File) {
+    if (mediaFile) {
+      const formData = new FormData();
+      if (conversationId) formData.append("conversationId", conversationId);
+      formData.append("content", content);
+      formData.append("file", mediaFile);
+
+      const res = await api.post("/message/group", formData);
+      return res.data.message;
+    }
+
     const res = await api.post("/message/group", {
        
       conversationId,
-      content,
-      imgURL
+      content
     });
     return res.data.message;
   },
@@ -49,5 +69,43 @@ export const chatService = {
     const res = await api.post('/conversation', { type, name, memberIds })
     return res.data.conversation
   
+  },
+  async renameGroup(conversationId: string, name: string) {
+    const res = await api.patch(`/conversation/${conversationId}/group/name`, {
+      name,
+    });
+    return res.data.conversation;
+  },
+  async addGroupMembers(conversationId: string, memberIds: string[]) {
+    const res = await api.post(`/conversation/${conversationId}/group/members`, {
+      memberIds,
+    });
+    return res.data.conversation;
+  },
+  async removeGroupMember(conversationId: string, memberId: string) {
+    const res = await api.delete(
+      `/conversation/${conversationId}/group/members/${memberId}`,
+    );
+    return res.data.conversation;
+  },
+  async transferGroupOwner(conversationId: string, newOwnerId: string) {
+    const res = await api.patch(`/conversation/${conversationId}/group/owner`, {
+      newOwnerId,
+    });
+    return res.data.conversation;
+  },
+  async leaveGroup(conversationId: string, newOwnerId?: string) {
+    const res = await api.post(`/conversation/${conversationId}/group/leave`, {
+      newOwnerId,
+    });
+    return res.data;
+  },
+  async toggleMessageReaction(messageId: string, emoji: string) {
+    const res = await api.patch(`/message/${messageId}/reactions`, { emoji });
+    return res.data;
+  },
+  async revokeMessage(messageId: string) {
+    const res = await api.patch(`/message/${messageId}/revoke`);
+    return res.data;
   }
 };

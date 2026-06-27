@@ -8,12 +8,17 @@ import UserAvatar from './UserAvatar'
 import { Separator } from '@base-ui/react'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { useSocketStore } from '@/stores/useSocketStore'
+import { useState } from 'react'
+import { Button } from '../ui/button'
+import { Settings } from 'lucide-react'
+import GroupSettingsDialog from './GroupSettingsDialog'
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     
     const { conversations, activeConversationId } = useChatStore()
     const { onlineUsers } = useSocketStore()
     const { user } = useAuthStore();
+    const [groupSettingsOpen, setGroupSettingsOpen] = useState(false)
     chat = chat ?? conversations.find((c) => c._id === activeConversationId)
     let otherUser;
 
@@ -65,9 +70,28 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                   </div>
 
                   {/* name */}
-                  <h2 className="font-semibold text-foreground">
+                  <h2 className="font-semibold text-foreground flex-1">
                       {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
                   </h2>
+
+                  {chat.type === "group" && (
+                      <>
+                          <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              onClick={() => setGroupSettingsOpen(true)}
+                          >
+                              <Settings className="size-4" />
+                              <span className="sr-only">Quan ly nhom</span>
+                          </Button>
+                          <GroupSettingsDialog
+                              open={groupSettingsOpen}
+                              onOpenChange={setGroupSettingsOpen}
+                              conversation={chat}
+                          />
+                      </>
+                  )}
               </div>
           </div>
       </header>

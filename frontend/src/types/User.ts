@@ -36,3 +36,7 @@ export interface FriendRequest {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface SuggestedFriend extends User {
+  friendRequestStatus?: "sent" | "received" | null;
+}

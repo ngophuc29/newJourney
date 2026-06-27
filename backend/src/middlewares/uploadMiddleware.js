@@ -4,7 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 export const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 1024 * 1024 * 10, // 1MB
+        fileSize: 1024 * 1024 * 50,
     },
 });
 
@@ -15,6 +15,27 @@ export const uploadImageFromBuffer = (buffer, options) => {
                 folder: "phuc_chat/avatars",
                 resource_type: "image",
                 transformation: [{ width: 200, height: 200, crop: "fill" }],
+                ...options,
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(result);
+                }
+            }
+        );
+
+        uploadStream.end(buffer);
+    });
+};
+
+export const uploadMediaFromBuffer = (buffer, options) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: "phuc_chat/messages",
+                resource_type: "auto",
                 ...options,
             },
             (error, result) => {

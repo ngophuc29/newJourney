@@ -1,6 +1,6 @@
 import type { Socket } from "socket.io-client";
-import type { Conversation, Message } from "./chat";
-import type { Friend, FriendRequest, User } from "./User";
+import type { Conversation, Message, MessageReaction } from "./chat";
+import type { Friend, FriendRequest, SuggestedFriend, User } from "./User";
 
 export interface AuthState {
   accessToken: string | null;
@@ -51,18 +51,31 @@ export interface ChatState {
   sendDirectMessage: (
     recipientId: string,
     content: string,
-    imgURL?: string,
+    mediaFile?: File,
     conversationId?: string,
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
-    imgURL?: string,
+    mediaFile?: File,
   ) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;
+  toggleMessageReaction: (messageId: string, emoji: string) => Promise<void>;
+  revokeMessage: (messageId: string) => Promise<void>;
+  markMessageRevoked: (
+    conversationId: string,
+    messageId: string,
+    revokedAt?: string | null,
+  ) => void;
+  updateMessageReactions: (
+    conversationId: string,
+    messageId: string,
+    reactions: MessageReaction[],
+  ) => void;
   // update convo
   updateConversation: (conversation: Conversation) => void;
+  removeConversation: (conversationId: string) => void;
   markAsSeen: () => Promise<void>;
   addConvo: (convo: Conversation) => void;
   createConversation: (
@@ -70,6 +83,21 @@ export interface ChatState {
     name: string,
     memberIds: string[],
   ) => Promise<void>;
+  openDirectConversation: (friendId: string) => Promise<void>;
+  renameGroup: (conversationId: string, name: string) => Promise<void>;
+  addGroupMembers: (
+    conversationId: string,
+    memberIds: string[],
+  ) => Promise<void>;
+  removeGroupMember: (
+    conversationId: string,
+    memberId: string,
+  ) => Promise<void>;
+  transferGroupOwner: (
+    conversationId: string,
+    newOwnerId: string,
+  ) => Promise<void>;
+  leaveGroup: (conversationId: string, newOwnerId?: string) => Promise<void>;
 }
 
 export interface SocketState {
@@ -84,12 +112,25 @@ export interface FriendState {
   loading: boolean;
   receivedList: FriendRequest[];
   sentList: FriendRequest[];
+  suggestedUsers: SuggestedFriend[];
   searchByUsername: (username: string) => Promise<User | null>;
   addFriend: (to: string, message?: string) => Promise<string>;
   getAllFriendRequests: () => Promise<void>;
   acceptFriendRequest: (requestId: string) => Promise<void>;
   declineFriendRequest: (requestId: string) => Promise<void>;
   getFriends: () => Promise<void>;
+  removeFriend: (friendId: string) => Promise<string>;
+  getSuggestedFriends: () => Promise<void>;
+  addReceivedRequest: (request: FriendRequest) => void;
+  addSentRequest: (request: FriendRequest) => void;
+  removeRequest: (requestId: string) => void;
+  addFriendToList: (friend: Friend) => void;
+  updateSuggestionStatus: (
+    userId: string,
+    status: "sent" | "received" | null,
+  ) => void;
+  removeSuggestedUser: (userId: string) => void;
+  removeFriendFromList: (friendId: string) => void;
 }
 
 export interface UserState {

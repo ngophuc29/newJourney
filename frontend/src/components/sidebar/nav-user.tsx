@@ -21,11 +21,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import type { User } from "@/types/User"
-import { ChevronsUpDownIcon, BellIcon, UserIcon } from "lucide-react"
+import { ChevronsUpDownIcon, BellIcon, UserIcon, UsersIcon } from "lucide-react"
 import Logout from "../auth/Logout"
 import { useState } from "react"
 import FriendRequestDialog from "../friendRequest/FriendRequestDialog"
 import ProfileDialog from "../profile/ProfileDialog"
+import MyFriendsDialog from "../friends/MyFriendsDialog"
 
 export function NavUser({
   user,
@@ -35,6 +36,7 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const [friendRequestOpen, setfriendRequestOpen] = useState(false);
   const [profileOpen, setprofileOpen] = useState(false);
+  const [myFriendsOpen, setMyFriendsOpen] = useState(false);
   return (
 
     <>
@@ -88,6 +90,12 @@ export function NavUser({
                   Tai khoan
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  onClick={() => setMyFriendsOpen(true)}
+                >
+                  <UsersIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
+                  Ban be cua toi
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => setfriendRequestOpen(true)}
                 >
                   <BellIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground"
@@ -117,6 +125,11 @@ export function NavUser({
       <ProfileDialog
         open={profileOpen}
         setOpen={setprofileOpen}
+      />
+
+      <MyFriendsDialog
+        open={myFriendsOpen}
+        setOpen={setMyFriendsOpen}
       />
 
 

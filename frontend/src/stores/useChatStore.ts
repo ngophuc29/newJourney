@@ -88,7 +88,7 @@ export const useChatStore = create<ChatState>()(
       sendDirectMessage: async (
         recipientId,
         content,
-        imgURL,
+        mediaFile,
         // conversationId,
       ) => {
         try {
@@ -97,7 +97,7 @@ export const useChatStore = create<ChatState>()(
           await chatService.sendDirectMessage(
             recipientId,
             content,
-            imgURL,
+            mediaFile,
             activeConversationId || undefined,
           );
 
@@ -110,9 +110,9 @@ export const useChatStore = create<ChatState>()(
           console.log("Loi xay ra khi gui tin nhan truc tiep", error);
         }
       },
-      sendGroupMessage: async (conversationId, content, imgURL) => {
+      sendGroupMessage: async (conversationId, content, mediaFile) => {
         try {
-          await chatService.sendGroupMessage(conversationId, content, imgURL);
+          await chatService.sendGroupMessage(conversationId, content, mediaFile);
           set((state) => ({
             conversations: state.conversations.map((c) =>
               c._id === conversationId ? { ...c, seenBy: [] } : c,
@@ -147,8 +147,8 @@ export const useChatStore = create<ChatState>()(
                 ...state.messages,
                 [convoId]: {
                   items: [...prevItems, message],
-                  hasMore: state.messages[convoId].hasMore,
-                  nextCursor: state.messages[convoId].nextCursor || undefined,
+                  hasMore: state.messages[convoId]?.hasMore ?? false,
+                  nextCursor: state.messages[convoId]?.nextCursor || undefined,
                 },
               },
             };
@@ -157,12 +157,120 @@ export const useChatStore = create<ChatState>()(
           console.log("Loi xay ra khi add message");
         }
       },
+      toggleMessageReaction: async (messageId, emoji) => {
+        try {
+          await chatService.toggleMessageReaction(messageId, emoji);
+        } catch (error) {
+          console.log("Loi xay ra khi reaction tin nhan", error);
+          throw error;
+        }
+      },
+      revokeMessage: async (messageId) => {
+        try {
+          await chatService.revokeMessage(messageId);
+        } catch (error) {
+          console.log("Loi xay ra khi thu hoi tin nhan", error);
+          throw error;
+        }
+      },
+      markMessageRevoked: (conversationId, messageId, revokedAt) => {
+        set((state) => {
+          const bucket = state.messages[conversationId];
+
+          const conversations = state.conversations.map((conversation) =>
+            conversation._id === conversationId &&
+            conversation.lastMessage?._id === messageId
+              ? {
+                  ...conversation,
+                  lastMessage: {
+                    ...conversation.lastMessage,
+                    content: "Tin nhan da bi thu hoi",
+                  },
+                }
+              : conversation,
+          );
+
+          if (!bucket) return { conversations };
+
+          return {
+            conversations,
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...bucket,
+                items: bucket.items.map((message) =>
+                  message._id === messageId
+                    ? {
+                        ...message,
+                        content: "",
+                        mediaUrl: null,
+                        imageUrl: null,
+                        imgUrl: null,
+                        mediaType: null,
+                        mediaPublicId: null,
+                        reactions: [],
+                        isRevoked: true,
+                        revokedAt: revokedAt ?? null,
+                      }
+                    : message,
+                ),
+              },
+            },
+          };
+        });
+      },
+      updateMessageReactions: (conversationId, messageId, reactions) => {
+        set((state) => {
+          const bucket = state.messages[conversationId];
+          if (!bucket) return state;
+
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...bucket,
+                items: bucket.items.map((message) =>
+                  message._id === messageId
+                    ? { ...message, reactions }
+                    : message,
+                ),
+              },
+            },
+          };
+        });
+      },
       updateConversation: (conversation: Conversation) => {
-        set((state) => ({
-          conversations: state.conversations.map((c) =>
-            c._id === conversation._id ? { ...c, ...conversation } : c,
-          ),
-        }));
+        set((state) => {
+          const current = state.conversations.find(
+            (c) => c._id === conversation._id,
+          );
+          const merged = current ? { ...current, ...conversation } : conversation;
+          const rest = state.conversations.filter(
+            (c) => c._id !== conversation._id,
+          );
+
+          return {
+            conversations: [merged, ...rest],
+          };
+        });
+      },
+      removeConversation: (conversationId: string) => {
+        set((state) => {
+          const nextActiveId =
+            state.activeConversationId === conversationId
+              ? null
+              : state.activeConversationId;
+          const { [conversationId]: _removedMessages, ...restMessages } =
+            state.messages;
+
+          return {
+            conversations: state.conversations.filter(
+              (c) => c._id !== conversationId,
+            ),
+            messages: restMessages,
+            activeConversationId: nextActiveId,
+          };
+        });
       },
       markAsSeen: async () => {
         try {
@@ -203,14 +311,16 @@ export const useChatStore = create<ChatState>()(
       },
       addConvo: (convo) => {
         set((state) => {
-          const exists = state.conversations.some(
+          const current = state.conversations.find(
             (c) => c._id.toString() === convo._id.toString(),
+          );
+          const merged = current ? { ...current, ...convo } : convo;
+          const rest = state.conversations.filter(
+            (c) => c._id.toString() !== convo._id.toString(),
           );
 
           return {
-            conversations: exists
-              ? state.conversations
-              : [convo, ...state.conversations],
+            conversations: [merged, ...rest],
             activeConversationId: convo._id,
           };
         });
@@ -230,6 +340,129 @@ export const useChatStore = create<ChatState>()(
             .socket?.emit("join-conversation", conversation._id);
         } catch (error) {
           console.log("Loi xay ra khi goi create conversation trong store");
+        } finally {
+          set({ loading: false });
+        }
+      },
+      openDirectConversation: async (friendId) => {
+        try {
+          set({ loading: true });
+
+          let conversation = get().conversations.find(
+            (convo) =>
+              convo.type === "direct" &&
+              convo.participants.some((p) => p._id === friendId),
+          );
+
+          if (conversation) {
+            get().addConvo(conversation);
+          } else {
+            conversation = await chatService.createConversation("direct", "", [
+              friendId,
+            ]);
+            if (!conversation) return;
+
+            get().addConvo(conversation);
+
+            useSocketStore
+              .getState()
+              .socket?.emit("join-conversation", conversation._id);
+          }
+
+          if (!conversation) return;
+
+          const messageState = get().messages[conversation._id];
+          const shouldFetchMessages =
+            !messageState ||
+            (messageState.items.length === 0 && !!conversation.lastMessage);
+
+          if (shouldFetchMessages) {
+            if (messageState?.items.length === 0 && conversation.lastMessage) {
+              set((state) => {
+                const { [conversation._id]: _emptyCache, ...rest } =
+                  state.messages;
+
+                return { messages: rest };
+              });
+            }
+
+            await get().fetchMessages(conversation._id);
+          }
+        } catch (error) {
+          console.log("Loi xay ra khi mo direct conversation", error);
+        } finally {
+          set({ loading: false });
+        }
+      },
+      renameGroup: async (conversationId, name) => {
+        try {
+          set({ loading: true });
+          const conversation = await chatService.renameGroup(conversationId, name);
+          get().updateConversation(conversation);
+        } catch (error) {
+          console.log("Loi xay ra khi doi ten nhom", error);
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+      addGroupMembers: async (conversationId, memberIds) => {
+        try {
+          set({ loading: true });
+          const conversation = await chatService.addGroupMembers(
+            conversationId,
+            memberIds,
+          );
+          get().updateConversation(conversation);
+        } catch (error) {
+          console.log("Loi xay ra khi them thanh vien nhom", error);
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+      removeGroupMember: async (conversationId, memberId) => {
+        try {
+          set({ loading: true });
+          const conversation = await chatService.removeGroupMember(
+            conversationId,
+            memberId,
+          );
+          get().updateConversation(conversation);
+        } catch (error) {
+          console.log("Loi xay ra khi xoa thanh vien nhom", error);
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+      transferGroupOwner: async (conversationId, newOwnerId) => {
+        try {
+          set({ loading: true });
+          const conversation = await chatService.transferGroupOwner(
+            conversationId,
+            newOwnerId,
+          );
+          get().updateConversation(conversation);
+        } catch (error) {
+          console.log("Loi xay ra khi chuyen truong nhom", error);
+          throw error;
+        } finally {
+          set({ loading: false });
+        }
+      },
+      leaveGroup: async (conversationId, newOwnerId) => {
+        try {
+          set({ loading: true });
+          const result = await chatService.leaveGroup(conversationId, newOwnerId);
+
+          if (result?.conversation) {
+            get().updateConversation(result.conversation);
+          }
+          get().removeConversation(conversationId);
+        } catch (error) {
+          console.log("Loi xay ra khi roi nhom", error);
+          throw error;
         } finally {
           set({ loading: false });
         }
