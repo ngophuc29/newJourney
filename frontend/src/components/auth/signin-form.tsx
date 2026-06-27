@@ -11,12 +11,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { useNavigate } from "react-router-dom"
 const signInSchema = z.object({
-   
-  username: z.string().min(3, "Ten dang nhap co it nhat 3 ki tu"),
-   
-  password: z.string().min(6, "Password toi thieu 6 ki tu")
-
-
+  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
+  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự")
 })
 
 type SignInFormValues = z.infer<typeof signInSchema>
@@ -36,14 +32,13 @@ export function SigninForm({
   
   
     const onSubmit = async (data: SignInFormValues) => {
-  
-      // goi api backend
       const { username, password } = data
-      
-      await signIn(username, password)
-      navigate('/')
-      console.log("hello");
-      
+      try {
+        await signIn(username, password)
+        navigate('/')
+      } catch (error) {
+        console.error("Đăng nhập thất bại:", error)
+      }
     }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -61,9 +56,9 @@ export function SigninForm({
 
                 </a>
 
-                <h1 className="text-2xl font-bold"> Chao mung ban quay lai</h1>
+                <h1 className="text-2xl font-bold"> Chào mừng bạn quay lại</h1>
                 <p className="text-muted-foreground text-balance">
-                  Chao mung ban
+                  Đăng nhập tài khoản của bạn
                 </p>
               </div>
                
@@ -72,7 +67,7 @@ export function SigninForm({
                 <div className="space-y-2">
                   <Label htmlFor="username"
                     className="text-sm block"
-                  >Ten dang nhap</Label>
+                  >Tên đăng nhập</Label>
 
                   <Input
                     type="text"
@@ -96,13 +91,13 @@ export function SigninForm({
                 <div className="space-y-2">
                   <Label htmlFor="password"
                     className="text-sm block">
-                    Password
+                    Mật khẩu
                   </Label>
 
                   <Input
-                    type="text"
+                    type="password"
                     id="password"
-                    placeholder="phucngo"
+                    placeholder="••••••••"
                     {...register("password")}
 
                   />
@@ -118,13 +113,13 @@ export function SigninForm({
                 type="submit"
                 className="w-full"
                 disabled={isSubmitting}
-              >Dang nhap
+              >Đăng nhập
               </Button>
 
               <div className="text-center text-sm">
-                Chua co tai khoan <a href="/signup"
+                Chưa có tài khoản <a href="/signup"
                   className="underline underline-offset-4"
-                >Dang ki</a>
+                >Đăng ký</a>
               </div>
             </div>
           </form>

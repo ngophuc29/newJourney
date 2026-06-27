@@ -11,13 +11,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { useNavigate } from "react-router-dom"
 const signUpSchema = z.object({
-  firstname: z.string().min(1, "Ten bat buoc phai co"),
-  lastname: z.string().min(1, "Ho bat buoc phai co"),
-  username: z.string().min(3, "Ten dang nhap co it nhat 3 ki tu"),
-  email: z.email("Email k hop le"),
-  password: z.string().min(6, "Password toi thieu 6 ki tu")
-
-
+  firstname: z.string().min(1, "Tên bắt buộc phải có"),
+  lastname: z.string().min(1, "Họ bắt buộc phải có"),
+  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
+  email: z.string().email("Email không hợp lệ"),
+  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự")
 })
 
 type SignUpFormValues = z.infer<typeof signUpSchema>
@@ -35,14 +33,13 @@ export function SignupForm({
 
 
   const onSubmit = async (data: SignUpFormValues) => {
-
-    // goi api backend
-
     const { firstname, lastname, username, password, email } = data
-    await signUp(username, password, email, firstname, lastname)
-
-    navigate("/signin")
-
+    try {
+      await signUp(username, password, email, firstname, lastname)
+      navigate("/signin")
+    } catch (error) {
+      console.error("Đăng ký thất bại:", error)
+    }
   }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -60,17 +57,17 @@ export function SignupForm({
 
                 </a>
 
-                <h1 className="text-2xl font-bold"> Tao tai khoan</h1>
+                <h1 className="text-2xl font-bold"> Tạo tài khoản</h1>
                 <p className="text-muted-foreground text-balance">
-                  Chao mung ban
+                  Chào mừng bạn tham gia cùng chúng tôi
                 </p>
               </div>
               {/* ho va ten */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="lastName"
+                  <Label htmlFor="lastname"
                     className="text-sm block"
-                  >Ho</Label>
+                  >Họ</Label>
 
                   <Input
                     type="text"
@@ -88,7 +85,7 @@ export function SignupForm({
                 <div className="space-y-2">
                   <Label htmlFor="firstname"
                     className="text-sm block"
-                  >Ten</Label>
+                  >Tên</Label>
 
                   <Input
                     type="text"
@@ -108,7 +105,7 @@ export function SignupForm({
                 <div className="space-y-2">
                   <Label htmlFor="username"
                     className="text-sm block"
-                  >Ten dang nhap</Label>
+                  >Tên đăng nhập</Label>
 
                   <Input
                     type="text"
@@ -154,13 +151,13 @@ export function SignupForm({
                 <div className="space-y-2">
                   <Label htmlFor="password"
                     className="text-sm block">
-                    Password
+                    Mật khẩu
                   </Label>
 
                   <Input
-                    type="text"
+                    type="password"
                     id="password"
-                    placeholder="phucngo"
+                    placeholder="••••••••"
                     {...register("password")}
 
                   />
@@ -176,13 +173,13 @@ export function SignupForm({
                 type="submit"
                 className="w-full"
                 disabled={isSubmitting}
-              >Tao tai khaon
+              >Tạo tài khoản
               </Button>
 
               <div className="text-center text-sm">
-                Da co tai khoan <a href="/signin"
+                Đã có tài khoản <a href="/signin"
                   className="underline underline-offset-4"
-                >Dang nhap</a>
+                >Đăng nhập</a>
               </div>
             </div>
           </form>

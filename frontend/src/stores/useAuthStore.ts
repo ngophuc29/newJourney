@@ -35,11 +35,13 @@ export const useAuthStore = create<AuthState>()(
             lastName,
           );
           toast.success(
-            "Dang ky thanh cong ! Ban se chuyen sang trang dang nhap",
+            "Đăng ký thành công! Bạn sẽ chuyển sang trang đăng nhập",
           );
-        } catch (error) {
+        } catch (error: any) {
           console.log(error);
-          toast.error("dky k thanh cong");
+          const message = error.response?.data?.message || "Đăng ký không thành công";
+          toast.error(message);
+          throw error;
         } finally {
           set({ loading: false });
         }
@@ -61,10 +63,12 @@ export const useAuthStore = create<AuthState>()(
 
           useChatStore.getState().fetchConversation();
           console.log("useAuthStore: set accessToken", accessToken);
-          toast.success("Dang nhap thanh cong ! Ban se chuyen sang trang chat");
-        } catch (error) {
+          toast.success("Đăng nhập thành công! Bạn sẽ chuyển sang trang chat");
+        } catch (error: any) {
           console.log(error);
-          toast.error("dnhap k thanh cong");
+          const message = error.response?.data?.message || "Đăng nhập không thành công";
+          toast.error(message);
+          throw error;
         } finally {
           set({ loading: false });
         }

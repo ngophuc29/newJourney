@@ -5,8 +5,8 @@ export const authService = {
     username: string,
     password: string,
     email: string,
-    lastName: string,
     firstName: string,
+    lastName: string,
   ) => {
     const res = await api.post(
       "/auth/signup",
@@ -14,8 +14,8 @@ export const authService = {
         username,
         password,
         email,
-        lastName,
         firstName,
+        lastName,
       },
       {
         withCredentials: true,

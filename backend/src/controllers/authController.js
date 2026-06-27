@@ -18,9 +18,27 @@ export const signUp = async (req, res) => {
         const { username, password, email, firstName, lastName } = req.body
 
         if (!username || !password || !email || !firstName || !lastName) {
-            return res.status(400).json(
-                { message: "Khong the thieu username, password, email, firstName, lastName " }
-            )
+            return res.status(400).json({ message: "Vui lòng nhập đầy đủ tất cả thông tin" })
+        }
+
+        const cleanFirstName = firstName.trim()
+        const cleanLastName = lastName.trim()
+
+        if (cleanFirstName.length < 1) {
+            return res.status(400).json({ message: "Tên bắt buộc phải có" })
+        }
+        if (cleanLastName.length < 1) {
+            return res.status(400).json({ message: "Họ bắt buộc phải có" })
+        }
+        if (username.length < 3) {
+            return res.status(400).json({ message: "Tên đăng nhập phải có ít nhất 3 ký tự" })
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Email không hợp lệ" })
+        }
+        if (password.length < 8) {
+            return res.status(400).json({ message: "Mật khẩu phải có ít nhất 8 ký tự" })
         }
 
         // kiểm tra user đã tồn tại chưa
@@ -38,7 +56,7 @@ export const signUp = async (req, res) => {
             username,
             hashedPassword,
             email,
-            displayName: `${firstName} ${lastName}`
+            displayName: `${cleanLastName} ${cleanFirstName}`
 
         })
 
