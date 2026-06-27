@@ -123,7 +123,7 @@ const MessageItem = ({
                             <p
                                 className={cn(
                                     "text-sm italic",
-                                    message.isOwn ? "text-white/80" : "text-black/70",
+                                    message.isOwn ? "text-white/80" : "text-foreground/70",
                                 )}
                             >
                                 Tin nhắn đã bị thu hồi
@@ -150,7 +150,7 @@ const MessageItem = ({
                             <p
                                 className={cn(
                                     "text-sm leading-relaxed break-words",
-                                    message.isOwn ? "text-white" : "text-black",
+                                    message.isOwn ? "text-white" : "text-foreground",
                                 )}
                             >
                                 {message.content}

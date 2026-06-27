@@ -4,6 +4,10 @@
   <br>
 </h1>
 
+<p align="center">
+  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMHBrYjBteDAybzh6ZW41MTZhZzdycGliZXFnMDlqdWx3bDhtNnQwcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/2IudUHdI075HL02Pkk/giphy.gif" alt="NewJourney Chat App" width="320" />
+</p>
+
 <h4 align="center">A modern, real-time full-stack chat application built with React, Node.js, Socket.IO & MongoDB.</h4>
 
 <p align="center">

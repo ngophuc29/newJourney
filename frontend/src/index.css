@@ -156,7 +156,7 @@
     /* Chat bubbles in dark mode */
     --chat-bubble-sent: 280 100% 65%;
     --chat-bubble-sent-foreground: 0 0% 100%;
-    --chat-bubble-received: 240 15% 18%;
+    --chat-bubble-received: 240 15% 22%;
     --chat-bubble-received-foreground: 250 100% 90%;
 
     /* Status colors */
