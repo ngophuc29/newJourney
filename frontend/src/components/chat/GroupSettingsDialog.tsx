@@ -172,11 +172,11 @@ const GroupSettingsDialog = ({
           <DialogTitle>Quan ly nhom chat</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="members" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="members">Thanh vien</TabsTrigger>
-            <TabsTrigger value="add">Them</TabsTrigger>
-            <TabsTrigger value="settings">Cai dat</TabsTrigger>
+        <Tabs defaultValue="members" className="w-full flex flex-col">
+          <TabsList className="w-full grid grid-cols-3 gap-2">
+            <TabsTrigger className="w-full justify-center" value="members">Thành viên</TabsTrigger>
+            <TabsTrigger className="w-full justify-center" value="add">Thêm</TabsTrigger>
+            <TabsTrigger className="w-full justify-center" value="settings">Cài đặt</TabsTrigger>
           </TabsList>
 
           <TabsContent value="members" className="mt-4 space-y-2">
