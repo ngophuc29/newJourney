@@ -1,5 +1,6 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
+import User from "../models/User.js";
 import { emitNewMessage, updateConversationAfterCreateMessage } from "../utils/messageHelper.js";
 import {io} from "../socket/index.js"
 import { uploadMediaFromBuffer } from "../middlewares/uploadMiddleware.js";
@@ -7,7 +8,7 @@ import { uploadMediaFromBuffer } from "../middlewares/uploadMiddleware.js";
 const getMediaType = (mimetype = "") => {
     if (mimetype.startsWith("image/")) return "image";
     if (mimetype.startsWith("video/")) return "video";
-    return null;
+    return "file";
 }
 
 const getUploadedMedia = async (file) => {
@@ -15,29 +16,61 @@ const getUploadedMedia = async (file) => {
 
     const mediaType = getMediaType(file.mimetype);
 
-    if (!mediaType) {
-        const error = new Error("Chi ho tro gui anh hoac video");
-        error.status = 400;
-        throw error;
+    let resourceType = "image";
+    if (mediaType === "video") resourceType = "video";
+    if (mediaType === "file") resourceType = "raw";
+
+    // Generate a unique public ID preserving the original extension
+    const originalName = file.originalname || "file";
+    const parts = originalName.split(".");
+    const ext = parts.length > 1 ? parts.pop().toLowerCase() : "";
+    const nameWithoutExt = parts.join(".").replace(/[^a-zA-Z0-9-_]/g, "_"); // sanitize filename
+    const uniqueId = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    
+    // For "raw" files, Cloudinary requires the extension in the public_id to preserve it
+    const publicId = ext ? `${nameWithoutExt}_${uniqueId}.${ext}` : `${nameWithoutExt}_${uniqueId}`;
+
+    const uploadOptions = {
+        resource_type: resourceType,
+        public_id: publicId,
+    };
+
+    if (mediaType === "file") {
+        // Force attachment download with the original filename on Cloudinary side
+        uploadOptions.content_disposition = `attachment; filename="${file.originalname}"`;
     }
 
-    const result = await uploadMediaFromBuffer(file.buffer, {
-        resource_type: mediaType === "video" ? "video" : "image",
-    });
+    const result = await uploadMediaFromBuffer(file.buffer, uploadOptions);
 
     return {
         mediaUrl: result.secure_url,
         mediaType,
         mediaPublicId: result.public_id,
         imageUrl: mediaType === "image" ? result.secure_url : undefined,
+        fileName: mediaType === "file" ? file.originalname : undefined,
+        fileSize: mediaType === "file" ? file.size : undefined,
     };
+}
+
+/**
+ * Parse @mentions from message content.
+ * Accepts an array of participant userIds for the conversation,
+ * and an explicit mentionedIds array from the client.
+ */
+const parseMentions = async (mentionedIds, participantUserIds) => {
+    if (!mentionedIds || !Array.isArray(mentionedIds) || mentionedIds.length === 0) {
+        return [];
+    }
+    // Only keep IDs that are actual participants in the conversation
+    const participantSet = new Set(participantUserIds.map(id => id.toString()));
+    return mentionedIds.filter(id => participantSet.has(id.toString()));
 }
 
 export const sendDirectMessage = async (req,res) => {
     
     try {
         // lay nguoi nhan ,noi dung tin nhan , id cua doan hoi thoai
-        const { recipientId, content, conversationId, replyTo } = req.body
+        const { recipientId, content, conversationId, replyTo, mentions: mentionedIds } = req.body
         const senderId = req.user._id
         const trimmedContent = content?.trim() ?? ""
         const media = await getUploadedMedia(req.file)
@@ -73,6 +106,12 @@ export const sendDirectMessage = async (req,res) => {
             })
         }
 
+        // Parse mentions
+        const participantUserIds = conversation.participant.map(p => p.userId);
+        const mentions = await parseMentions(
+            mentionedIds ? (Array.isArray(mentionedIds) ? mentionedIds : JSON.parse(mentionedIds)) : [],
+            participantUserIds
+        );
 
         //tao 1 tin nhan moi
         const message = await Message.create({
@@ -80,8 +119,8 @@ export const sendDirectMessage = async (req,res) => {
             senderId,
             content: trimmedContent,
             ...media,
-            replyTo: replyTo || null
-
+            replyTo: replyTo || null,
+            mentions
         })
 
         // Populate replyTo for the response
@@ -127,7 +166,7 @@ export const sendDirectMessage = async (req,res) => {
 
 export const sendGroupMessage = async (req, res) => {
     try {
-        const { conversationId, content, replyTo } = req.body
+        const { conversationId, content, replyTo, mentions: mentionedIds } = req.body
         const senderId = req.user._id
         const conversation = req.conversation
         const trimmedContent = content?.trim() ?? ""
@@ -137,12 +176,20 @@ export const sendGroupMessage = async (req, res) => {
             return res.status(400).json({message:"thieu noi dung"})
         }
 
+        // Parse mentions
+        const participantUserIds = conversation.participant.map(p => p.userId);
+        const mentions = await parseMentions(
+            mentionedIds ? (Array.isArray(mentionedIds) ? mentionedIds : JSON.parse(mentionedIds)) : [],
+            participantUserIds
+        );
+
         const message = await Message.create({
             conversationId,
             senderId,
             content: trimmedContent,
             ...media,
-            replyTo: replyTo || null
+            replyTo: replyTo || null,
+            mentions
         })
 
         // Populate replyTo for the response
@@ -290,6 +337,9 @@ export const revokeMessage = async (req, res) => {
         message.mediaType = undefined
         message.mediaPublicId = undefined
         message.imageUrl = undefined
+        message.fileName = undefined
+        message.fileSize = undefined
+        message.mentions = []
         message.reactions = []
 
         await message.save()
@@ -417,6 +467,8 @@ export const forwardMessage = async (req, res) => {
                 mediaUrl: sourceMessage.mediaUrl,
                 mediaType: sourceMessage.mediaType,
                 mediaPublicId: sourceMessage.mediaPublicId,
+                fileName: sourceMessage.fileName,
+                fileSize: sourceMessage.fileSize,
                 isForwarded: true,
                 forwardedFrom: sourceMessage.senderId
             });

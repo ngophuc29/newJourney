@@ -26,7 +26,9 @@ export const updateConversationAfterCreateMessage = (conversation, message, send
             ? "[Image]"
             : message.mediaType === "video"
               ? "[Video]"
-              : "";
+              : message.mediaType === "file"
+                ? `[File] ${message.fileName || ""}`
+                : "";
 
     // khi 1 tin nhan da gui di ta can Cap nhat seenBy va cap nhat LastMessage
     conversation.set({

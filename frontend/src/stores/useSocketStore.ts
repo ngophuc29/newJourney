@@ -114,6 +114,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket.on("new-message", (data: NewMessagePayload) => {
       const { message, conversation, unreadCounts } = data;
+      const currentUser = useAuthStore.getState().user;
 
       useChatStore.getState().addMessage(message);
 
@@ -131,6 +132,19 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       }
 
       useChatStore.getState().updateConversation(updatedConversation);
+
+      // Mention notification
+      if (
+        currentUser &&
+        message.mentions &&
+        message.mentions.includes(currentUser._id) &&
+        message.senderId !== currentUser._id
+      ) {
+        const senderName = conversation.participants?.find(
+          (p: { _id: string }) => p._id === message.senderId
+        )?.displayName || "Ai đó";
+        toast.info(`${senderName} đã nhắc đến bạn trong tin nhắn`);
+      }
     });
 
     socket.on("read-message", (data: ReadMessagePayload) => {
@@ -142,6 +156,11 @@ export const useSocketStore = create<SocketState>((set, get) => ({
       };
 
       useChatStore.getState().updateConversation(updated);
+    });
+
+    // ==================== NEW: Read Receipts ====================
+    socket.on("messages-read", (data: { conversationId: string; userId: string; readAt: string }) => {
+      useChatStore.getState().updateMessageReadBy(data.conversationId, data.userId, data.readAt);
     });
 
     socket.on(

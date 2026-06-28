@@ -1,14 +1,16 @@
 import { useAuthStore } from "@/stores/useAuthStore";
-import type { Conversation } from "@/types/chat";
+import type { Conversation, Participant } from "@/types/chat";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { ImagePlus, Send, X, Check } from "lucide-react";
+import { ImagePlus, Send, X, Check, Paperclip } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
 import { useSocketStore } from "@/stores/useSocketStore";
 import { toast } from "sonner";
 import ReplyPreview from "./ReplyPreview";
+import MentionDropdown from "./MentionDropdown";
+import FilePreviewCard from "./FilePreviewCard";
 
 const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const { user } = useAuthStore();
@@ -21,6 +23,12 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
+
+  // Mention State
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionTriggerIndex, setMentionTriggerIndex] = useState(-1);
+  const [mentionedIds, setMentionedIds] = useState<string[]>([]);
 
   const {
     sendDirectMessage,
@@ -100,11 +108,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-      toast.error("Chi ho tro gui anh hoac video");
-      return;
-    }
-
+    // Remove strict image/video check to allow documents/zips
     setMediaFile(file);
   };
 
@@ -116,6 +120,29 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const handleCancelEdit = () => {
     setEditingMessage(null);
     setValue("");
+  };
+
+  // Mention Helpers
+  const handleMentionSelect = (participant: Participant) => {
+    if (mentionTriggerIndex === -1) return;
+
+    const beforeMention = value.substring(0, mentionTriggerIndex);
+    const afterMention = value.substring(inputRef.current?.selectionStart || value.length);
+    const displayName = participant.displayName;
+
+    const newValue = `${beforeMention}@${displayName} ${afterMention}`;
+    setValue(newValue);
+    setMentionedIds((prev) => [...prev, participant._id]);
+    setMentionOpen(false);
+
+    // Focus input and place cursor after the mention
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        const newCursorPos = beforeMention.length + displayName.length + 2; // +2 for @ and space
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 50);
   };
 
   const sendMessage = async () => {
@@ -148,6 +175,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
 
     setSending(true);
     setValue("");
+    setMentionedIds([]);
 
     try {
       if (selectedConvo.type === "direct") {
@@ -157,12 +185,13 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
 
         if (!otherUser) return;
 
-        await sendDirectMessage(otherUser._id, currentValue, currentFile ?? undefined);
+        await sendDirectMessage(otherUser._id, currentValue, currentFile ?? undefined, mentionedIds);
       } else {
         await sendGroupMessage(
           selectedConvo._id,
           currentValue,
           currentFile ?? undefined,
+          mentionedIds,
         );
       }
       clearMedia();
@@ -187,16 +216,36 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(e.target.value);
+    const text = e.target.value;
+    setValue(text);
     // Emit typing event (only when not in edit mode)
-    if (!editingMessage && e.target.value.trim()) {
+    if (!editingMessage && text.trim()) {
       emitTyping();
     }
+
+    // Mention detection (only in group chats)
+    if (selectedConvo.type === "group") {
+      const selectionStart = e.target.selectionStart || 0;
+      const textBeforeCursor = text.substring(0, selectionStart);
+      const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+      if (lastAtIndex !== -1 && (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1] === " ")) {
+        const query = textBeforeCursor.substring(lastAtIndex + 1);
+        if (!query.includes(" ")) {
+          setMentionOpen(true);
+          setMentionQuery(query);
+          setMentionTriggerIndex(lastAtIndex);
+          return;
+        }
+      }
+    }
+    setMentionOpen(false);
   };
 
   const canSend = editingMessage ? !!value.trim() : !!value.trim() || !!mediaFile;
+  const isImage = mediaFile?.type.startsWith("image/");
   const isVideo = mediaFile?.type.startsWith("video/");
-  const mediaLabel = isVideo ? "video" : "anh";
+  const mediaLabel = isImage ? "anh" : isVideo ? "video" : "file";
 
   return (
     <div className="flex flex-col bg-background">
@@ -234,24 +283,31 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
               type="button"
               variant="destructive"
               size="icon-xs"
-              className="absolute -right-2 -top-2"
+              className="absolute -right-2 -top-2 z-10"
               disabled={sending}
               onClick={clearMedia}
             >
               <X className="size-3" />
             </Button>
 
-            {isVideo ? (
+            {isImage ? (
+              <img
+                src={mediaPreview}
+                alt="Preview"
+                className="max-h-36 rounded object-cover"
+              />
+            ) : isVideo ? (
               <video
                 src={mediaPreview}
                 className="max-h-36 rounded object-cover"
                 controls
               />
             ) : (
-              <img
-                src={mediaPreview}
-                alt="Preview"
-                className="max-h-36 rounded object-cover"
+              <FilePreviewCard
+                fileName={mediaFile?.name || "file"}
+                fileSize={mediaFile?.size}
+                mediaUrl={mediaPreview}
+                compact
               />
             )}
 
@@ -269,7 +325,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,video/*"
+                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt,.csv,.ppt,.pptx"
                 className="hidden"
                 disabled={sending}
                 onChange={handleSelectFile}
@@ -282,7 +338,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
                 disabled={sending}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <ImagePlus />
+                <Paperclip className="size-5 text-muted-foreground" />
               </Button>
             </>
           )}
@@ -318,6 +374,17 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
                 </div>
               )}
             </div>
+
+            {/* Mention Dropdown */}
+            {mentionOpen && selectedConvo.type === "group" && (
+              <MentionDropdown
+                participants={selectedConvo.participants.filter(p => p._id !== user._id)}
+                query={mentionQuery}
+                onSelect={handleMentionSelect}
+                onClose={() => setMentionOpen(false)}
+                visible={mentionOpen}
+              />
+            )}
           </div>
 
           {editingMessage ? (

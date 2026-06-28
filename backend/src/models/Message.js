@@ -25,10 +25,16 @@ const messageSchema = new mongoose.Schema({
     },
     mediaType: {
         type: String,
-        enum: ["image", "video"]
+        enum: ["image", "video", "file"]
     },
     mediaPublicId: {
         type: String
+    },
+    fileName: {
+        type: String
+    },
+    fileSize: {
+        type: Number
     },
     type: {
         type: String,
@@ -38,6 +44,25 @@ const messageSchema = new mongoose.Schema({
     systemType: {
         type: String
     },
+    mentions: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
+    ],
+    readBy: [
+        {
+            userId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+                required: true
+            },
+            readAt: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ],
     reactions: [
         {
             userId: {

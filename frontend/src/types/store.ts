@@ -65,12 +65,13 @@ export interface ChatState {
     recipientId: string,
     content: string,
     mediaFile?: File,
-    conversationId?: string,
+    mentions?: string[],
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
     mediaFile?: File,
+    mentions?: string[],
   ) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;
@@ -134,6 +135,9 @@ export interface ChatState {
   // Typing
   setTypingUser: (conversationId: string, user: TypingUser) => void;
   removeTypingUser: (conversationId: string, userId: string) => void;
+
+  // Read Receipts
+  updateMessageReadBy: (conversationId: string, userId: string, readAt: string) => void;
 }
 
 export interface SocketState {

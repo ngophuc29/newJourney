@@ -100,6 +100,7 @@ export const useChatStore = create<ChatState>()(
         recipientId,
         content,
         mediaFile,
+        mentions,
       ) => {
         try {
           const { activeConversationId, replyingTo } = get();
@@ -110,6 +111,7 @@ export const useChatStore = create<ChatState>()(
             mediaFile,
             activeConversationId || undefined,
             replyingTo?._id || undefined,
+            mentions,
           );
 
           set((state) => ({
@@ -122,7 +124,7 @@ export const useChatStore = create<ChatState>()(
           console.log("Loi xay ra khi gui tin nhan truc tiep", error);
         }
       },
-      sendGroupMessage: async (conversationId, content, mediaFile) => {
+      sendGroupMessage: async (conversationId, content, mediaFile, mentions) => {
         try {
           const { replyingTo } = get();
 
@@ -131,6 +133,7 @@ export const useChatStore = create<ChatState>()(
             content,
             mediaFile,
             replyingTo?._id || undefined,
+            mentions,
           );
 
           set((state) => ({
@@ -638,6 +641,32 @@ export const useChatStore = create<ChatState>()(
             typingUsers: {
               ...state.typingUsers,
               [conversationId]: current.filter((u) => u.userId !== userId),
+            },
+          };
+        });
+      },
+
+      // ==================== Read Receipts ====================
+      updateMessageReadBy: (conversationId, userId, readAt) => {
+        set((state) => {
+          const bucket = state.messages[conversationId];
+          if (!bucket) return state;
+
+          return {
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...bucket,
+                items: bucket.items.map((message) => {
+                  if (message.isOwn || message.isRevoked) return message;
+                  const alreadyRead = message.readBy?.some((r) => r.userId === userId);
+                  if (alreadyRead) return message;
+                  return {
+                    ...message,
+                    readBy: [...(message.readBy || []), { userId, readAt }],
+                  };
+                }),
+              },
             },
           };
         });

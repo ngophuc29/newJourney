@@ -32,7 +32,7 @@ export interface ReplyTo {
   content: string | null;
   senderId: string;
   senderName?: string | null;
-  mediaType?: "image" | "video" | null;
+  mediaType?: "image" | "video" | "file" | null;
 }
 
 export interface PinnedMessage {
@@ -68,10 +68,14 @@ export interface Message {
   imgUrl?: string | null;
   imageUrl?: string | null;
   mediaUrl?: string | null;
-  mediaType?: "image" | "video" | null;
+  mediaType?: "image" | "video" | "file" | null;
   mediaPublicId?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
   type?: "user" | "system";
   systemType?: string | null;
+  mentions?: string[];
+  readBy?: { userId: string; readAt: string }[];
   reactions?: MessageReaction[];
   replyTo?: ReplyTo | null;
   isEdited?: boolean;
@@ -87,6 +91,13 @@ export interface Message {
     displayName: string;
     avatarURL?: string | null;
   } | null;
+}
+
+export interface ReaderInfo {
+  _id: string;
+  displayName: string;
+  avatarURL?: string | null;
+  readAt: string;
 }
 
 export interface MessageReaction {

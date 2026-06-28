@@ -290,6 +290,20 @@ export const markAsSeen = async (req, res) => {
             },
         );
 
+        // Bulk update readBy on all unread messages in this conversation
+        const readAt = new Date();
+        await Message.updateMany(
+            {
+                conversationId,
+                senderId: { $ne: userId },
+                "readBy.userId": { $ne: userId },
+                isRevoked: { $ne: true },
+            },
+            {
+                $addToSet: { readBy: { userId, readAt } },
+            }
+        );
+
         io.to(conversationId).emit("read-message", {
             conversation: updated,
             lastMessage: {
@@ -302,6 +316,13 @@ export const markAsSeen = async (req, res) => {
             },
         });
 
+        // Emit detailed read receipt event
+        io.to(conversationId).emit("messages-read", {
+            conversationId,
+            userId,
+            readAt: readAt.toISOString(),
+        });
+
         return res.status(200).json({
             message: "Marked as seen",
             seenBy: updated?.sennBy || [],
@@ -310,6 +331,44 @@ export const markAsSeen = async (req, res) => {
     } catch (error) {
         console.error("Lỗi khi mark as seen", error);
         return res.status(500).json({ message: "Lỗi hệ thống" });
+    }
+};
+
+export const getMessageReaders = async (req, res) => {
+    try {
+        const { conversationId, messageId } = req.params;
+        const userId = req.user._id.toString();
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" });
+        }
+
+        const isMember = conversation.participant.some(
+            (p) => p.userId.toString() === userId
+        );
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong cuoc tro chuyen nay" });
+        }
+
+        const message = await Message.findById(messageId)
+            .populate("readBy.userId", "displayName avatarURL");
+
+        if (!message) {
+            return res.status(404).json({ message: "Khong tim thay tin nhan" });
+        }
+
+        const readers = (message.readBy || []).map((r) => ({
+            _id: r.userId?._id || r.userId,
+            displayName: r.userId?.displayName || "Unknown",
+            avatarURL: r.userId?.avatarURL || null,
+            readAt: r.readAt,
+        }));
+
+        return res.status(200).json({ readers });
+    } catch (error) {
+        console.error("Loi khi lay danh sach nguoi doc", error);
+        return res.status(500).json({ message: "Loi he thong" });
     }
 };
 

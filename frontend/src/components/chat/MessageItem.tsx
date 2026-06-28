@@ -4,11 +4,13 @@ import UserAvatar from "./UserAvatar";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { RotateCcw, SmilePlus, Reply, Pencil, Pin, Share2 } from "lucide-react";
+import { RotateCcw, SmilePlus, Reply, Pencil, Pin, Share2, Eye } from "lucide-react";
 import { useState } from "react";
 import { useChatStore } from "@/stores/useChatStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import ForwardMessagesDialog from "./ForwardMessagesDialog";
+import FilePreviewCard from "./FilePreviewCard";
+import ReadReceiptsDialog from "./ReadReceiptsDialog";
 
 interface MessageItemProps {
     message: Message;
@@ -27,9 +29,51 @@ const MessageItem = ({
 }: MessageItemProps) => {
     const [reactionOpen, setReactionOpen] = useState(false);
     const [forwardOpen, setForwardOpen] = useState(false);
+    const [receiptsOpen, setReceiptsOpen] = useState(false);
     const { revokeMessage, toggleMessageReaction, setReplyingTo, setEditingMessage, pinMessage } = useChatStore();
     const { user } = useAuthStore();
     const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
+
+    const renderContentWithMentions = (content: string, isOwn: boolean) => {
+        if (!content) return null;
+        
+        const participantNames = selectedConvo.participants.map(p => p.displayName);
+        if (participantNames.length === 0) return content;
+
+        // Sort names by length descending to match longer names first
+        const sortedNames = [...participantNames].sort((a, b) => b.length - a.length);
+        const escapedNames = sortedNames.map(name => name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+        const regex = new RegExp(`@(${escapedNames.join('|')})\\b`, 'g');
+
+        const parts = content.split(regex);
+        if (parts.length === 1) return content;
+
+        const result: React.ReactNode[] = [];
+        let matchIndex = 0;
+        
+        for (let i = 0; i < parts.length; i++) {
+            if (i % 2 === 1) {
+                const matchedName = parts[i];
+                result.push(
+                    <span
+                        key={`mention-${matchIndex++}`}
+                        className={cn(
+                            "font-semibold px-1 py-0.5 rounded-sm text-[13px]",
+                            isOwn 
+                                ? "bg-white/20 text-white" 
+                                : "bg-primary/10 text-primary"
+                        )}
+                    >
+                        @{matchedName}
+                    </span>
+                );
+            } else {
+                result.push(parts[i]);
+            }
+        }
+        
+        return result;
+    };
 
     const isShowTime =
         index === 0 ||
@@ -252,12 +296,23 @@ const MessageItem = ({
                             />
                         )}
 
-                        {!message.isRevoked && mediaUrl && message.mediaType !== "video" && (
+                        {!message.isRevoked && mediaUrl && message.mediaType === "image" && (
                             <img
                                 src={mediaUrl}
                                 alt="Message media"
                                 className="mt-2 mb-2 max-h-80 max-w-full rounded-md object-cover"
                             />
+                        )}
+
+                        {!message.isRevoked && mediaUrl && message.mediaType === "file" && (
+                            <div className="mt-2 mb-2 max-w-full">
+                                <FilePreviewCard
+                                    fileName={message.fileName || "File đính kèm"}
+                                    fileSize={message.fileSize}
+                                    mediaUrl={mediaUrl}
+                                    isOwn={message.isOwn}
+                                />
+                            </div>
                         )}
 
                         {!message.isRevoked && message.content && (
@@ -267,7 +322,7 @@ const MessageItem = ({
                                     message.isOwn ? "text-white" : "text-foreground",
                                 )}
                             >
-                                {message.content}
+                                {renderContentWithMentions(message.content, !!message.isOwn)}
                             </p>
                         )}
 
@@ -422,7 +477,7 @@ const MessageItem = ({
                         </span>
                     )}
                     {/* seen/ delivered */}
-                    {message.isOwn && message._id === selectedConvo.lastMessage?._id && (
+                    {message.isOwn && selectedConvo.type === "direct" && message._id === selectedConvo.lastMessage?._id && (
                         <Badge
                             variant="outline"
                             className={cn(
@@ -435,12 +490,41 @@ const MessageItem = ({
                             {lastMessageStatus}
                         </Badge>
                     )}
+
+                    {/* Group Read Receipts Details */}
+                    {message.isOwn && selectedConvo.type === "group" && !message.isRevoked && (
+                        <button
+                            type="button"
+                            onClick={() => setReceiptsOpen(true)}
+                            className={cn(
+                                "text-[10px] mt-1 flex items-center gap-1 hover:underline transition-all",
+                                message.readBy && message.readBy.length > 0
+                                    ? "text-primary font-medium"
+                                    : "text-muted-foreground"
+                            )}
+                        >
+                            <Eye className="size-3" />
+                            {message.readBy && message.readBy.length > 0 ? (
+                                <span>Đã xem ({message.readBy.length})</span>
+                            ) : (
+                                <span>Đã gửi</span>
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
             {forwardOpen && (
                 <ForwardMessagesDialog
                     open={forwardOpen}
                     onOpenChange={setForwardOpen}
+                    messageId={message._id}
+                />
+            )}
+            {receiptsOpen && (
+                <ReadReceiptsDialog
+                    open={receiptsOpen}
+                    onOpenChange={setReceiptsOpen}
+                    conversationId={selectedConvo._id}
                     messageId={message._id}
                 />
             )}

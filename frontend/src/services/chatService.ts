@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import type { ConversationResponse, Message } from "@/types/chat";
+import type { ConversationResponse, Message, ReaderInfo } from "@/types/chat";
 
 interface FetchMessageProps {
   messages: Message[];
@@ -26,7 +26,7 @@ export const chatService = {
     return { messages: res.data.messages, cursor: res.data.nextCursor }
 
   },
-  async sendDirectMessage(recipientId: string, content: string = "", mediaFile?: File, conversationId?: string, replyTo?: string) {
+  async sendDirectMessage(recipientId: string, content: string = "", mediaFile?: File, conversationId?: string, replyTo?: string, mentions?: string[]) {
     if (mediaFile) {
       const formData = new FormData();
       formData.append("recipientId", recipientId);
@@ -34,23 +34,25 @@ export const chatService = {
       formData.append("file", mediaFile);
       if (conversationId) formData.append("conversationId", conversationId);
       if (replyTo) formData.append("replyTo", replyTo);
+      if (mentions && mentions.length > 0) formData.append("mentions", JSON.stringify(mentions));
 
       const res = await api.post("/message/direct", formData);
       return res.data.message;
     }
 
     const res = await api.post('/message/direct', {
-      recipientId, content, conversationId, replyTo
+      recipientId, content, conversationId, replyTo, mentions
     })
     return res.data.message
   },
-  async sendGroupMessage(conversationId?: string, content: string = "", mediaFile?: File, replyTo?: string) {
+  async sendGroupMessage(conversationId?: string, content: string = "", mediaFile?: File, replyTo?: string, mentions?: string[]) {
     if (mediaFile) {
       const formData = new FormData();
       if (conversationId) formData.append("conversationId", conversationId);
       formData.append("content", content);
       formData.append("file", mediaFile);
       if (replyTo) formData.append("replyTo", replyTo);
+      if (mentions && mentions.length > 0) formData.append("mentions", JSON.stringify(mentions));
 
       const res = await api.post("/message/group", formData);
       return res.data.message;
@@ -60,7 +62,8 @@ export const chatService = {
 
       conversationId,
       content,
-      replyTo
+      replyTo,
+      mentions
     });
     return res.data.message;
   },
@@ -146,5 +149,11 @@ export const chatService = {
   async getConversationMedia(conversationId: string) {
     const res = await api.get(`/conversation/${conversationId}/media`);
     return res.data.media as Message[];
+  },
+
+  // ==================== NEW: Read Receipts ====================
+  async getMessageReaders(conversationId: string, messageId: string) {
+    const res = await api.get(`/conversation/${conversationId}/messages/${messageId}/readers`);
+    return res.data.readers as ReaderInfo[];
   },
 };
