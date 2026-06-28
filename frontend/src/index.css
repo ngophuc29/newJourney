@@ -382,3 +382,27 @@
   }
 }
 
+/* Audio bar animation */
+.animate-audio-bar {
+  animation: audioBarJump 1.2s ease-in-out infinite alternate;
+  transform-origin: bottom;
+}
+
+@keyframes audioBarJump {
+  0% {
+    transform: scaleY(0.3);
+  }
+  100% {
+    transform: scaleY(1.1);
+  }
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+

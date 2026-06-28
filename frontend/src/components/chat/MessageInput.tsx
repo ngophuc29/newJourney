@@ -2,7 +2,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation, Participant } from "@/types/chat";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { Send, X, Check, Paperclip } from "lucide-react";
+import { Send, X, Check, Paperclip, Mic, Trash2 } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import ReplyPreview from "./ReplyPreview";
 import MentionDropdown from "./MentionDropdown";
 import FilePreviewCard from "./FilePreviewCard";
+import api from "@/lib/axios";
 
 const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const { user } = useAuthStore();
@@ -29,6 +30,13 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionTriggerIndex, setMentionTriggerIndex] = useState(-1);
   const [mentionedIds, setMentionedIds] = useState<string[]>([]);
+
+  // Voice Recording State
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const {
     sendDirectMessage,
@@ -120,6 +128,105 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const handleCancelEdit = () => {
     setEditingMessage(null);
     setValue("");
+  };
+
+  // Voice Recording Helpers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Lỗi khi truy cập micro:", err);
+      toast.error("Không thể truy cập micro. Vui lòng cấp quyền.");
+    }
+  };
+
+  const stopAndSendRecording = async () => {
+    if (!mediaRecorderRef.current || !isRecording) return;
+
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
+
+    const duration = recordingTime;
+
+    mediaRecorderRef.current.onstop = async () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      const audioFile = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
+
+      setSending(true);
+      try {
+        if (selectedConvo.type === "direct") {
+          const otherUser = selectedConvo.participants.find((p) => p._id !== user._id);
+          if (!otherUser) return;
+          
+          const formData = new FormData();
+          formData.append("recipientId", otherUser._id);
+          formData.append("file", audioFile);
+          formData.append("duration", duration.toString());
+          if (selectedConvo._id) formData.append("conversationId", selectedConvo._id);
+
+          await api.post("/message/direct", formData);
+        } else {
+          const formData = new FormData();
+          formData.append("conversationId", selectedConvo._id);
+          formData.append("file", audioFile);
+          formData.append("duration", duration.toString());
+
+          await api.post("/message/group", formData);
+        }
+      } catch (error) {
+        console.error("Lỗi khi gửi tin nhắn thoại:", error);
+        toast.error("Không thể gửi tin nhắn thoại");
+      } finally {
+        setSending(false);
+        setIsRecording(false);
+      }
+    };
+
+    mediaRecorderRef.current.stop();
+  };
+
+  const cancelRecording = () => {
+    if (!mediaRecorderRef.current || !isRecording) return;
+
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+    }
+
+    mediaRecorderRef.current.onstop = () => {
+      audioChunksRef.current = [];
+    };
+
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    setRecordingTime(0);
+  };
+
+  const formatRecordingTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   // Mention Helpers
@@ -334,58 +441,97 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="hover:bg-gradient/10 transition-smooth"
+                className="hover:bg-gradient/10 transition-smooth text-muted-foreground"
                 disabled={sending}
                 onClick={() => fileInputRef.current?.click()}
               >
-                <Paperclip className="size-5 text-muted-foreground" />
+                <Paperclip className="size-5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="hover:bg-gradient/10 transition-smooth text-muted-foreground"
+                disabled={sending}
+                onClick={startRecording}
+              >
+                <Mic className="size-5" />
               </Button>
             </>
           )}
 
-          <div className="relative flex-1">
-            <Input
-              ref={inputRef}
-              onKeyDown={handleKeyPress}
-              value={value}
-              onChange={handleInputChange}
-              disabled={sending}
-              placeholder={editingMessage ? "Chỉnh sửa tin nhắn..." : "Soan tin nhan"}
-              className="resize-none border-border/50 bg-white pr-20 transition-smooth focus:border-primary/50"
-            />
-            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 transform items-center gap-1">
-              {!editingMessage && (
+          {isRecording ? (
+            <div className="flex flex-1 items-center justify-between bg-muted/60 rounded-full px-4 py-2 animate-in slide-in-from-bottom-2 duration-200">
+              <div className="flex items-center gap-3">
+                <span className="flex h-2 w-2 rounded-full bg-destructive animate-ping" />
+                <span className="text-xs font-semibold text-destructive">Đang ghi âm...</span>
+                <span className="text-xs font-mono text-muted-foreground">{formatRecordingTime(recordingTime)}</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
-                  disabled={sending}
-                  onClick={() => setOpen(!open)}
+                  size="icon-xs"
+                  onClick={cancelRecording}
+                  className="text-muted-foreground hover:text-destructive rounded-full"
                 >
-                  :)
+                  <Trash2 className="size-4" />
                 </Button>
-              )}
+                <Button
+                  type="button"
+                  onClick={stopAndSendRecording}
+                  disabled={sending}
+                  className="bg-primary hover:bg-primary-hover text-white rounded-full size-8 p-0 flex items-center justify-center shadow-md"
+                >
+                  <Send className="size-3.5 fill-current ml-0.5" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative flex-1">
+              <Input
+                ref={inputRef}
+                onKeyDown={handleKeyPress}
+                value={value}
+                onChange={handleInputChange}
+                disabled={sending}
+                placeholder={editingMessage ? "Chỉnh sửa tin nhắn..." : "Soan tin nhan"}
+                className="resize-none border-border/50 bg-white pr-20 transition-smooth focus:border-primary/50"
+              />
+              <div className="absolute right-2 top-1/2 flex -translate-y-1/2 transform items-center gap-1">
+                {!editingMessage && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={sending}
+                    onClick={() => setOpen(!open)}
+                  >
+                    :)
+                  </Button>
+                )}
 
-              {open && !editingMessage && (
-                <div className="absolute bottom-12">
-                  <EmojiPicker
-                    onChange={(emoji: string) => setValue((prev) => prev + emoji)}
-                  />
-                </div>
+                {open && !editingMessage && (
+                  <div className="absolute bottom-12">
+                    <EmojiPicker
+                      onChange={(emoji: string) => setValue((prev) => prev + emoji)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Mention Dropdown */}
+              {mentionOpen && selectedConvo.type === "group" && (
+                <MentionDropdown
+                  participants={selectedConvo.participants.filter(p => p._id !== user._id)}
+                  query={mentionQuery}
+                  onSelect={handleMentionSelect}
+                  onClose={() => setMentionOpen(false)}
+                  visible={mentionOpen}
+                />
               )}
             </div>
-
-            {/* Mention Dropdown */}
-            {mentionOpen && selectedConvo.type === "group" && (
-              <MentionDropdown
-                participants={selectedConvo.participants.filter(p => p._id !== user._id)}
-                query={mentionQuery}
-                onSelect={handleMentionSelect}
-                onClose={() => setMentionOpen(false)}
-                visible={mentionOpen}
-              />
-            )}
-          </div>
+          )}
 
           {editingMessage ? (
             <Button

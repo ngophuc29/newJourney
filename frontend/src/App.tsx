@@ -8,6 +8,8 @@ import { useThemeStore } from "./stores/useThemeStore"
 import { useEffect, useState } from "react"
 import { useAuthStore } from "./stores/useAuthStore"
 import { useSocketStore } from "./stores/useSocketStore"
+import StoryViewer from "./components/story/StoryViewer"
+import PwaInstallPrompt from "./components/ui/PwaInstallPrompt"
 const HEALTH_CHECK_INTERVAL = 3000
 
 function App() { 
@@ -201,6 +203,8 @@ function App() {
       </Routes>
       
       </BrowserRouter>
+      <StoryViewer />
+      <PwaInstallPrompt />
     </>
   )
 }

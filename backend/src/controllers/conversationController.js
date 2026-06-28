@@ -2,6 +2,7 @@ import Conversation from "../models/Conversation.js"
 import Message from "../models/Message.js"
 import Friend from "../models/Friend.js"
 import User from "../models/User.js"
+import Notification from "../models/Notification.js"
 import { io} from "../socket/index.js"
 import { emitNewMessage, formatConversationForClient, updateConversationAfterCreateMessage } from "../utils/messageHelper.js"
 
@@ -446,6 +447,18 @@ export const addGroupMembers = async (req, res) => {
         })
 
         await conversation.save()
+
+        // Create DB notifications for new group members
+        for (const memberId of uniqueMemberIds) {
+            const notif = await Notification.create({
+                userId: memberId,
+                type: "group_invite",
+                senderId: userId,
+                relatedId: conversation._id
+            });
+            const populatedNotif = await notif.populate("senderId", "displayName avatarURL username");
+            io.to(memberId.toString()).emit("new-notification", { notification: populatedNotif });
+        }
 
         const formatted = await populateConversation(conversation)
         emitGroupUpdated(conversation, formatted)

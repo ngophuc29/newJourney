@@ -25,7 +25,7 @@ const messageSchema = new mongoose.Schema({
     },
     mediaType: {
         type: String,
-        enum: ["image", "video", "file"]
+        enum: ["image", "video", "file", "audio"]
     },
     mediaPublicId: {
         type: String
@@ -35,6 +35,9 @@ const messageSchema = new mongoose.Schema({
     },
     fileSize: {
         type: Number
+    },
+    duration: {
+        type: Number // duration in seconds for voice messages
     },
     type: {
         type: String,

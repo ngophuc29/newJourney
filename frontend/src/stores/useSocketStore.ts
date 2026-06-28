@@ -3,6 +3,7 @@ import { io, type Socket } from "socket.io-client";
 import { useAuthStore } from "./useAuthStore";
 import { useChatStore } from "./useChatStore";
 import { useFriendStore } from "./useFriendStore";
+import { useNotificationStore } from "./useNotificationStore";
 import type { SocketState } from "@/types/store";
 import type { Conversation, Message, MessageReaction } from "@/types/chat";
 import type { Friend, FriendRequest } from "@/types/User";
@@ -313,6 +314,10 @@ export const useSocketStore = create<SocketState>((set, get) => ({
 
     socket.on("friend-removed", ({ friendId }: FriendRemovedPayload) => {
       useFriendStore.getState().removeFriendFromList(friendId);
+    });
+
+    socket.on("new-notification", ({ notification }) => {
+      useNotificationStore.getState().addNotification(notification);
     });
   },
 

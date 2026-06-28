@@ -1,6 +1,7 @@
 import Friend from "../models/Friend.js"
 import User from "../models/User.js"
 import FriendRequest from "../models/FriendRequest.js"
+import Notification from "../models/Notification.js"
 import { io } from "../socket/index.js"
 
 
@@ -64,7 +65,17 @@ export const sendFriendRequest = async (req, res) => {
             { path: "to", select: "_id username displayName avatarURL" }
         ])
 
+        // Create DB notification
+        const notification = await Notification.create({
+            userId: to,
+            type: "friend_request",
+            senderId: from,
+            relatedId: request._id
+        });
+        const populatedNotification = await notification.populate("senderId", "displayName avatarURL username");
+        
         io.to(to.toString()).emit("friend-request-received", { request })
+        io.to(to.toString()).emit("new-notification", { notification: populatedNotification })
         io.to(from.toString()).emit("friend-request-sent", { request })
 
         return res.status(201).json({
@@ -73,23 +84,19 @@ export const sendFriendRequest = async (req, res) => {
     } catch (error) {
         console.log("Loi khi gui loi moi ket ban");
         return res.status(500).json({ message: "Loi he thong" })
-
     }
 }
 
 export const acceptFriend = async (req, res) => {
     try {
-
         const { requestId } = req.params
         const userId = req.user._id
 
         const request = await FriendRequest.findById(requestId)
 
-
         if (!request) {
             return res.status(404).json({ message: "Khong tim thay loi moi ket ban" })
         }
-
 
         if (request.to.toString() !== userId.toString()) {
             return res.status(403).json({ message: "Ban k co quyen chap nhan loi moi nay" })

@@ -1,6 +1,7 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
+import Notification from "../models/Notification.js";
 import { emitNewMessage, updateConversationAfterCreateMessage } from "../utils/messageHelper.js";
 import {io} from "../socket/index.js"
 import { uploadMediaFromBuffer } from "../middlewares/uploadMiddleware.js";
@@ -8,6 +9,7 @@ import { uploadMediaFromBuffer } from "../middlewares/uploadMiddleware.js";
 const getMediaType = (mimetype = "") => {
     if (mimetype.startsWith("image/")) return "image";
     if (mimetype.startsWith("video/")) return "video";
+    if (mimetype.startsWith("audio/")) return "audio";
     return "file";
 }
 
@@ -17,7 +19,7 @@ const getUploadedMedia = async (file) => {
     const mediaType = getMediaType(file.mimetype);
 
     let resourceType = "image";
-    if (mediaType === "video") resourceType = "video";
+    if (mediaType === "video" || mediaType === "audio") resourceType = "video";
     if (mediaType === "file") resourceType = "raw";
 
     // Generate a unique public ID preserving the original extension
@@ -70,7 +72,7 @@ export const sendDirectMessage = async (req,res) => {
     
     try {
         // lay nguoi nhan ,noi dung tin nhan , id cua doan hoi thoai
-        const { recipientId, content, conversationId, replyTo, mentions: mentionedIds } = req.body
+        const { recipientId, content, conversationId, replyTo, mentions: mentionedIds, duration } = req.body
         const senderId = req.user._id
         const trimmedContent = content?.trim() ?? ""
         const media = await getUploadedMedia(req.file)
@@ -120,7 +122,8 @@ export const sendDirectMessage = async (req,res) => {
             content: trimmedContent,
             ...media,
             replyTo: replyTo || null,
-            mentions
+            mentions,
+            duration: duration ? Number(duration) : undefined
         })
 
         // Populate replyTo for the response
@@ -130,6 +133,21 @@ export const sendDirectMessage = async (req,res) => {
                 select: 'content senderId mediaType',
                 populate: { path: 'senderId', select: 'displayName' }
             })
+        }
+
+        // Create DB notifications for mentions
+        if (mentions && mentions.length > 0) {
+            for (const mentionUserId of mentions) {
+                if (mentionUserId.toString() === senderId.toString()) continue;
+                const notif = await Notification.create({
+                    userId: mentionUserId,
+                    type: "mention",
+                    senderId,
+                    relatedId: message._id
+                });
+                const populatedNotif = await notif.populate("senderId", "displayName avatarURL username");
+                io.to(mentionUserId.toString()).emit("new-notification", { notification: populatedNotif });
+            }
         }
 
         updateConversationAfterCreateMessage(conversation, message, senderId);
@@ -166,7 +184,7 @@ export const sendDirectMessage = async (req,res) => {
 
 export const sendGroupMessage = async (req, res) => {
     try {
-        const { conversationId, content, replyTo, mentions: mentionedIds } = req.body
+        const { conversationId, content, replyTo, mentions: mentionedIds, duration } = req.body
         const senderId = req.user._id
         const conversation = req.conversation
         const trimmedContent = content?.trim() ?? ""
@@ -189,7 +207,8 @@ export const sendGroupMessage = async (req, res) => {
             content: trimmedContent,
             ...media,
             replyTo: replyTo || null,
-            mentions
+            mentions,
+            duration: duration ? Number(duration) : undefined
         })
 
         // Populate replyTo for the response
@@ -201,6 +220,20 @@ export const sendGroupMessage = async (req, res) => {
             })
         }
 
+        // Create DB notifications for mentions
+        if (mentions && mentions.length > 0) {
+            for (const mentionUserId of mentions) {
+                if (mentionUserId.toString() === senderId.toString()) continue;
+                const notif = await Notification.create({
+                    userId: mentionUserId,
+                    type: "mention",
+                    senderId,
+                    relatedId: message._id
+                });
+                const populatedNotif = await notif.populate("senderId", "displayName avatarURL username");
+                io.to(mentionUserId.toString()).emit("new-notification", { notification: populatedNotif });
+            }
+        }
 
         updateConversationAfterCreateMessage(conversation, message, senderId)
         

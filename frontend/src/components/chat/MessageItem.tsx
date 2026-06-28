@@ -11,6 +11,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import ForwardMessagesDialog from "./ForwardMessagesDialog";
 import FilePreviewCard from "./FilePreviewCard";
 import ReadReceiptsDialog from "./ReadReceiptsDialog";
+import AudioPlayer from "./AudioPlayer";
 
 interface MessageItemProps {
     message: Message;
@@ -310,6 +311,16 @@ const MessageItem = ({
                                     fileName={message.fileName || "File đính kèm"}
                                     fileSize={message.fileSize}
                                     mediaUrl={mediaUrl}
+                                    isOwn={message.isOwn}
+                                />
+                            </div>
+                        )}
+
+                        {!message.isRevoked && mediaUrl && message.mediaType === "audio" && (
+                            <div className="mt-2 mb-2 max-w-full">
+                                <AudioPlayer
+                                    src={mediaUrl}
+                                    duration={message.duration || undefined}
                                     isOwn={message.isOwn}
                                 />
                             </div>

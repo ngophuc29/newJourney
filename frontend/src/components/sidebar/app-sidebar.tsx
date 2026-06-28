@@ -28,6 +28,8 @@ import { useThemeStore } from "@/stores/useThemeStore"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { useChatStore } from "@/stores/useChatStore"
 import ConversationSkeleton from "../skeleton/ConversationSkeleton"
+import NotificationBell from "../notification/NotificationBell"
+import StoryTray from "../story/StoryTray"
 
 
 
@@ -52,6 +54,7 @@ const {convoLoading} =useChatStore()
                 <div className="flex w-full items-center px-2 justify-between ">
                   <h1 className="text-xl font-bold text-white">New Journey</h1>
                   <div className="flex items-center gap-2">
+                    <NotificationBell />
                     <Sun className="size-4 text-white/80" />
                     <Switch
                       checked={isDarK}
@@ -59,10 +62,8 @@ const {convoLoading} =useChatStore()
                       className="data-[state=checked]:bg-background/80"
                     />
                     <Moon
-                      className="size-4 text-white/80"
+                      className="size-4 text-white/85"
                     />
-
-
                   </div>
                 </div>
               </a>
@@ -75,6 +76,9 @@ const {convoLoading} =useChatStore()
 
 
       <SidebarContent className="beautiful-scollbar">
+        {/* Story Tray */}
+        <StoryTray />
+
         {/* new chat */}
         <SidebarGroup>
           <SidebarGroupContent>
