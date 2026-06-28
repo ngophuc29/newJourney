@@ -47,15 +47,6 @@ const formatFileSize = (bytes?: number | null): string => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const getDownloadUrl = (url: string) => {
-    if (!url) return "";
-    if (url.includes("cloudinary.com")) {
-        // Inject fl_attachment flag to force browser download
-        return url.replace("/upload/", "/upload/fl_attachment/");
-    }
-    return url;
-};
-
 const FilePreviewCard = ({
     fileName,
     fileSize,

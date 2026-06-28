@@ -2,7 +2,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import type { Conversation, Participant } from "@/types/chat";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { ImagePlus, Send, X, Check, Paperclip } from "lucide-react";
+import { Send, X, Check, Paperclip } from "lucide-react";
 import { Input } from "../ui/input";
 import EmojiPicker from "./EmojiPicker";
 import { useChatStore } from "@/stores/useChatStore";
