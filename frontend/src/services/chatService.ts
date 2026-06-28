@@ -6,7 +6,7 @@ interface FetchMessageProps {
   cursor?: string;
 }
 
-const pageLimit =50
+const pageLimit = 50
 export const chatService = {
   async fetchConversation(): Promise<ConversationResponse> {
     const res = await api.get("/conversation");
@@ -23,41 +23,44 @@ export const chatService = {
     cursor?: string,
   ): Promise<FetchMessageProps> {
     const res = await api.get(`/conversation/${id}/messages?limit=${pageLimit}&cursor=${cursor}`)
-    return {messages:res.data.messages, cursor:res.data.nextCursor}
+    return { messages: res.data.messages, cursor: res.data.nextCursor }
 
   },
-  async sendDirectMessage(recipientId: string, content: string = "", mediaFile?: File, conversationId?: string) {
+  async sendDirectMessage(recipientId: string, content: string = "", mediaFile?: File, conversationId?: string, replyTo?: string) {
     if (mediaFile) {
       const formData = new FormData();
       formData.append("recipientId", recipientId);
       formData.append("content", content);
       formData.append("file", mediaFile);
       if (conversationId) formData.append("conversationId", conversationId);
+      if (replyTo) formData.append("replyTo", replyTo);
 
       const res = await api.post("/message/direct", formData);
       return res.data.message;
     }
 
     const res = await api.post('/message/direct', {
-      recipientId,content,conversationId
+      recipientId, content, conversationId, replyTo
     })
     return res.data.message
   },
-  async sendGroupMessage(conversationId?: string, content: string = "", mediaFile?: File) {
+  async sendGroupMessage(conversationId?: string, content: string = "", mediaFile?: File, replyTo?: string) {
     if (mediaFile) {
       const formData = new FormData();
       if (conversationId) formData.append("conversationId", conversationId);
       formData.append("content", content);
       formData.append("file", mediaFile);
+      if (replyTo) formData.append("replyTo", replyTo);
 
       const res = await api.post("/message/group", formData);
       return res.data.message;
     }
 
     const res = await api.post("/message/group", {
-       
+
       conversationId,
-      content
+      content,
+      replyTo
     });
     return res.data.message;
   },
@@ -68,7 +71,7 @@ export const chatService = {
   async createConversation(type: 'direct' | 'group', name: string, memberIds: string[]) {
     const res = await api.post('/conversation', { type, name, memberIds })
     return res.data.conversation
-  
+
   },
   async renameGroup(conversationId: string, name: string) {
     const res = await api.patch(`/conversation/${conversationId}/group/name`, {
@@ -107,5 +110,31 @@ export const chatService = {
   async revokeMessage(messageId: string) {
     const res = await api.patch(`/message/${messageId}/revoke`);
     return res.data;
-  }
+  },
+
+  // ==================== NEW: Edit Message ====================
+  async editMessage(messageId: string, content: string) {
+    const res = await api.patch(`/message/${messageId}/edit`, { content });
+    return res.data;
+  },
+
+  // ==================== NEW: Pin Messages ====================
+  async pinMessage(conversationId: string, messageId: string) {
+    const res = await api.post(`/conversation/${conversationId}/pin`, { messageId });
+    return res.data;
+  },
+  async unpinMessage(conversationId: string, messageId: string) {
+    const res = await api.delete(`/conversation/${conversationId}/pin/${messageId}`);
+    return res.data;
+  },
+  async getPinnedMessages(conversationId: string) {
+    const res = await api.get(`/conversation/${conversationId}/pins`);
+    return res.data.pinnedMessages;
+  },
+
+  // ==================== NEW: Search Messages ====================
+  async searchMessages(conversationId: string, query: string) {
+    const res = await api.get(`/conversation/${conversationId}/search?q=${encodeURIComponent(query)}`);
+    return res.data.messages as Message[];
+  },
 };

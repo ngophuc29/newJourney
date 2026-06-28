@@ -10,8 +10,9 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import { useSocketStore } from '@/stores/useSocketStore'
 import { useState } from 'react'
 import { Button } from '../ui/button'
-import { Settings } from 'lucide-react'
+import { Settings, Search } from 'lucide-react'
 import GroupSettingsDialog from './GroupSettingsDialog'
+import SearchMessagesDialog from './SearchMessagesDialog'
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     
@@ -19,6 +20,8 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     const { onlineUsers } = useSocketStore()
     const { user } = useAuthStore();
     const [groupSettingsOpen, setGroupSettingsOpen] = useState(false)
+    const [searchOpen, setSearchOpen] = useState(false)
+
     chat = chat ?? conversations.find((c) => c._id === activeConversationId)
     let otherUser;
 
@@ -73,6 +76,23 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                   <h2 className="font-semibold text-foreground flex-1">
                       {chat.type === "direct" ? otherUser?.displayName : chat.group?.name}
                   </h2>
+
+                  {/* Search button */}
+                  <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={() => setSearchOpen(true)}
+                      title="Tìm kiếm tin nhắn"
+                  >
+                      <Search className="size-4" />
+                      <span className="sr-only">Tim kiem</span>
+                  </Button>
+
+                  <SearchMessagesDialog
+                      open={searchOpen}
+                      onOpenChange={setSearchOpen}
+                  />
 
                   {chat.type === "group" && (
                       <>

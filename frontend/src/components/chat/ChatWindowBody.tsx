@@ -4,6 +4,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import ChatWelcomeScreen from './ChatWelcomeScreen'
 import MessageItem from './MessageItem'
 import InfiniteScroll from 'react-infinite-scroll-component'
+import TypingIndicator from './TypingIndicator'
+
 const ChatWindowBody = () => {
     const { activeConversationId, conversations, messages: allMessages ,fetchMessages} = useChatStore()
 
@@ -80,7 +82,6 @@ const ChatWindowBody = () => {
         return <div className='flex h-full items-center justify-center text-muted-foreground'
         > Chua co tin nhan nao trong cuoc tro chuyen nay</div>
     }
-    console.log("tin nhan day : ", messages);
 
     return (
         <div
@@ -94,6 +95,10 @@ const ChatWindowBody = () => {
                 className="flex flex-col-reverse overflow-y-auto overflow-x-hidden beautiful-scrollbar">
                 <div ref={messagesEndRef}
                 ></div>
+
+                {/* Typing Indicator */}
+                <TypingIndicator />
+
                 <InfiniteScroll
                     inverse={true}
                     dataLength={messages.length}
@@ -124,5 +129,3 @@ const ChatWindowBody = () => {
 }
 
 export default ChatWindowBody
-
-// 30:08

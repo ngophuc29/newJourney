@@ -30,6 +30,11 @@ export interface ThemeStore {
   setTheme: (dark: boolean) => void;
 }
 
+export interface TypingUser {
+  userId: string;
+  displayName: string;
+}
+
 export interface ChatState {
   loading: boolean;
   conversations: Conversation[];
@@ -44,6 +49,14 @@ export interface ChatState {
   activeConversationId: string | null; // id cuoc tro chuyen dang mo
   convoLoading: boolean;
   messasgeLoading: boolean;
+
+  // Reply & Edit state
+  replyingTo: Message | null;
+  editingMessage: Message | null;
+
+  // Typing indicator state
+  typingUsers: Record<string, TypingUser[]>;
+
   reset: () => void;
   setActionConversation: (id: string | null) => void;
   fetchConversation: () => Promise<void>;
@@ -98,6 +111,25 @@ export interface ChatState {
     newOwnerId: string,
   ) => Promise<void>;
   leaveGroup: (conversationId: string, newOwnerId?: string) => Promise<void>;
+
+  // Reply & Edit actions
+  setReplyingTo: (message: Message | null) => void;
+  setEditingMessage: (message: Message | null) => void;
+  editMessage: (messageId: string, content: string) => Promise<void>;
+  updateEditedMessage: (conversationId: string, messageId: string, content: string, editedAt: string) => void;
+
+  // Pin actions
+  pinMessage: (conversationId: string, messageId: string) => Promise<void>;
+  unpinMessage: (conversationId: string, messageId: string) => Promise<void>;
+  addPinnedMessage: (conversationId: string, pin: { messageId: string; pinnedBy: string; pinnedAt: string; message?: Message }) => void;
+  removePinnedMessage: (conversationId: string, messageId: string) => void;
+
+  // Search
+  searchMessages: (conversationId: string, query: string) => Promise<Message[]>;
+
+  // Typing
+  setTypingUser: (conversationId: string, user: TypingUser) => void;
+  removeTypingUser: (conversationId: string, userId: string) => void;
 }
 
 export interface SocketState {

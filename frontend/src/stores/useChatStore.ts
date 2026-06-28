@@ -15,6 +15,14 @@ export const useChatStore = create<ChatState>()(
       activeConversationId: null,
       convoLoading: false, // convo loading ,
       messasgeLoading: false, //loading cho message
+
+      // Reply & Edit state
+      replyingTo: null,
+      editingMessage: null,
+
+      // Typing indicator state
+      typingUsers: {},
+
       setActionConversation: (id) => set({ activeConversationId: id }),
       reset() {
         set({
@@ -23,6 +31,9 @@ export const useChatStore = create<ChatState>()(
           activeConversationId: null,
           convoLoading: false,
           messasgeLoading: false,
+          replyingTo: null,
+          editingMessage: null,
+          typingUsers: {},
         });
       },
       fetchConversation: async () => {
@@ -89,19 +100,20 @@ export const useChatStore = create<ChatState>()(
         recipientId,
         content,
         mediaFile,
-        // conversationId,
       ) => {
         try {
-          const { activeConversationId } = get();
+          const { activeConversationId, replyingTo } = get();
 
           await chatService.sendDirectMessage(
             recipientId,
             content,
             mediaFile,
             activeConversationId || undefined,
+            replyingTo?._id || undefined,
           );
 
           set((state) => ({
+            replyingTo: null,
             conversations: state.conversations.map((c) =>
               c._id === activeConversationId ? { ...c, seenBy: [] } : c,
             ),
@@ -112,8 +124,17 @@ export const useChatStore = create<ChatState>()(
       },
       sendGroupMessage: async (conversationId, content, mediaFile) => {
         try {
-          await chatService.sendGroupMessage(conversationId, content, mediaFile);
+          const { replyingTo } = get();
+
+          await chatService.sendGroupMessage(
+            conversationId,
+            content,
+            mediaFile,
+            replyingTo?._id || undefined,
+          );
+
           set((state) => ({
+            replyingTo: null,
             conversations: state.conversations.map((c) =>
               c._id === conversationId ? { ...c, seenBy: [] } : c,
             ),
@@ -467,6 +488,140 @@ export const useChatStore = create<ChatState>()(
           set({ loading: false });
         }
       },
+
+      // ==================== Reply & Edit ====================
+      setReplyingTo: (message) => set({ replyingTo: message, editingMessage: null }),
+      setEditingMessage: (message) => set({ editingMessage: message, replyingTo: null }),
+
+      editMessage: async (messageId, content) => {
+        try {
+          await chatService.editMessage(messageId, content);
+          set({ editingMessage: null });
+        } catch (error) {
+          console.log("Loi xay ra khi chinh sua tin nhan", error);
+          throw error;
+        }
+      },
+
+      updateEditedMessage: (conversationId, messageId, content, editedAt) => {
+        set((state) => {
+          const bucket = state.messages[conversationId];
+
+          const conversations = state.conversations.map((conversation) =>
+            conversation._id === conversationId &&
+            conversation.lastMessage?._id === messageId
+              ? {
+                  ...conversation,
+                  lastMessage: {
+                    ...conversation.lastMessage,
+                    content,
+                  },
+                }
+              : conversation,
+          );
+
+          if (!bucket) return { conversations };
+
+          return {
+            conversations,
+            messages: {
+              ...state.messages,
+              [conversationId]: {
+                ...bucket,
+                items: bucket.items.map((message) =>
+                  message._id === messageId
+                    ? { ...message, content, isEdited: true, editedAt }
+                    : message,
+                ),
+              },
+            },
+          };
+        });
+      },
+
+      // ==================== Pin Messages ====================
+      pinMessage: async (conversationId, messageId) => {
+        try {
+          await chatService.pinMessage(conversationId, messageId);
+        } catch (error) {
+          console.log("Loi xay ra khi ghim tin nhan", error);
+          throw error;
+        }
+      },
+
+      unpinMessage: async (conversationId, messageId) => {
+        try {
+          await chatService.unpinMessage(conversationId, messageId);
+        } catch (error) {
+          console.log("Loi xay ra khi bo ghim tin nhan", error);
+          throw error;
+        }
+      },
+
+      addPinnedMessage: (conversationId, pin) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c._id === conversationId
+              ? {
+                  ...c,
+                  pinnedMessages: [...(c.pinnedMessages || []), pin],
+                }
+              : c,
+          ),
+        }));
+      },
+
+      removePinnedMessage: (conversationId, messageId) => {
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c._id === conversationId
+              ? {
+                  ...c,
+                  pinnedMessages: (c.pinnedMessages || []).filter(
+                    (p) => p.messageId !== messageId,
+                  ),
+                }
+              : c,
+          ),
+        }));
+      },
+
+      // ==================== Search Messages ====================
+      searchMessages: async (conversationId, query) => {
+        try {
+          return await chatService.searchMessages(conversationId, query);
+        } catch (error) {
+          console.log("Loi xay ra khi tim kiem tin nhan", error);
+          return [];
+        }
+      },
+
+      // ==================== Typing Indicator ====================
+      setTypingUser: (conversationId, user) => {
+        set((state) => {
+          const current = state.typingUsers[conversationId] || [];
+          // Don't add if already in list
+          if (current.some((u) => u.userId === user.userId)) return state;
+          return {
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: [...current, user],
+            },
+          };
+        });
+      },
+
+      removeTypingUser: (conversationId, userId) => {
+        set((state) => {
+          const current = state.typingUsers[conversationId] || [];
+          return {
+            typingUsers: {
+              ...state.typingUsers,
+              [conversationId]: current.filter((u) => u.userId !== userId),
+            },
+          };
+        });
+      },
     }),
     {
       name: "chat-storage",
@@ -474,4 +629,3 @@ export const useChatStore = create<ChatState>()(
     },
   ),
 );
-

@@ -42,6 +42,22 @@ io.on("connection", async (socket) => {
         socket.leave(conversationId);
     });
 
+    // ==================== TYPING INDICATOR ====================
+    socket.on("typing", ({ conversationId }) => {
+        socket.to(conversationId).emit("user-typing", {
+            conversationId,
+            userId: user._id.toString(),
+            displayName: user.displayName
+        });
+    });
+
+    socket.on("stop-typing", ({ conversationId }) => {
+        socket.to(conversationId).emit("user-stop-typing", {
+            conversationId,
+            userId: user._id.toString()
+        });
+    });
+
     socket.join(user._id.toString());
 
     socket.on("disconnect", () => {

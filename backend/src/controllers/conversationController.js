@@ -182,9 +182,9 @@ export const getConversation = async (req, res) => {
 
     }
 }
+
 export const getMessages = async (req, res) => {
     try {
-
         const { conversationId } = req.params;
         const { limit = 50, cursor } = req.query
 
@@ -193,10 +193,6 @@ export const getMessages = async (req, res) => {
         }
 
         const query = { conversationId }
-        // const query = {
-        //     conversationId: new mongoose.Types.ObjectId(conversationId)
-        // };
-
 
         if (cursor) {
             query.createdAt = { $lt: new Date(cursor) }
@@ -205,6 +201,11 @@ export const getMessages = async (req, res) => {
         let messages = await Message.find(query)
             .sort({ createdAt: -1 })
             .limit(Number(limit) + 1)
+            .populate({
+                path: 'replyTo',
+                select: 'content senderId mediaType',
+                populate: { path: 'senderId', select: 'displayName' }
+            })
 
         let nextCursor = null
 
@@ -216,30 +217,43 @@ export const getMessages = async (req, res) => {
 
         messages = messages.reverse()
 
-        return res.status(200).json({ messages, nextCursor })
+        // Format replyTo for client
+        const formatted = messages.map((m) => {
+            const msg = m.toObject()
+            if (msg.replyTo && msg.replyTo.senderId) {
+                msg.replyTo = {
+                    _id: msg.replyTo._id,
+                    content: msg.replyTo.content,
+                    senderId: msg.replyTo.senderId._id || msg.replyTo.senderId,
+                    senderName: msg.replyTo.senderId.displayName || null,
+                    mediaType: msg.replyTo.mediaType || null
+                }
+            }
+            return msg
+        })
+
+        return res.status(200).json({ messages: formatted, nextCursor })
 
     } catch (error) {
         console.log("loi khi lay message", error);
         return res.status(500).json({ message: "Loi he thong " })
-
     }
 }
 
 export const getUserConversationsForSocketIO = async (userId) => {
     try {
         const conversations = await Conversation.find({
-            "participant.userId":userId
+            "participant.userId": userId
         }, {
-            _id:1
+            _id: 1
         })
-        return conversations.map((c)=>c._id.toString())
+        return conversations.map((c) => c._id.toString())
     } catch (error) {
-        console.log("Loi khi fetch conversation",error);
+        console.log("Loi khi fetch conversation", error);
         return []
-        
     }
-    
 }
+
 export const markAsSeen = async (req, res) => {
     try {
         const { conversationId } = req.params;
@@ -523,6 +537,203 @@ export const leaveGroup = async (req, res) => {
         return res.status(200).json({ conversation: formatted, message: "Da roi nhom" })
     } catch (error) {
         console.log("Loi khi roi nhom", error);
+        return res.status(500).json({ message: "Loi he thong" })
+    }
+}
+
+// ==================== PIN MESSAGES ====================
+
+export const pinMessage = async (req, res) => {
+    try {
+        const { conversationId } = req.params
+        const { messageId } = req.body
+        const userId = req.user._id
+
+        const conversation = await Conversation.findById(conversationId)
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" })
+        }
+
+        const isMember = conversation.participant.some(
+            (p) => p.userId.toString() === userId.toString()
+        )
+
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong cuoc tro chuyen nay" })
+        }
+
+        const message = await Message.findById(messageId)
+
+        if (!message || message.conversationId.toString() !== conversationId) {
+            return res.status(404).json({ message: "Khong tim thay tin nhan trong cuoc tro chuyen nay" })
+        }
+
+        // Check if already pinned
+        const alreadyPinned = conversation.pinnedMessages.some(
+            (p) => p.messageId.toString() === messageId
+        )
+
+        if (alreadyPinned) {
+            return res.status(400).json({ message: "Tin nhan da duoc ghim" })
+        }
+
+        // Max 50 pinned messages
+        if (conversation.pinnedMessages.length >= 50) {
+            return res.status(400).json({ message: "Da dat gioi han toi da 50 tin nhan ghim" })
+        }
+
+        conversation.pinnedMessages.push({
+            messageId,
+            pinnedBy: userId,
+            pinnedAt: new Date()
+        })
+
+        await conversation.save()
+
+        const payload = {
+            conversationId,
+            messageId,
+            pinnedBy: userId,
+            pinnedAt: new Date(),
+            message: message.toObject()
+        }
+
+        io.to(conversationId).emit("message-pinned", payload)
+
+        return res.status(200).json(payload)
+    } catch (error) {
+        console.log("Loi khi ghim tin nhan", error);
+        return res.status(500).json({ message: "Loi he thong" })
+    }
+}
+
+export const unpinMessage = async (req, res) => {
+    try {
+        const { conversationId, messageId } = req.params
+        const userId = req.user._id
+
+        const conversation = await Conversation.findById(conversationId)
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" })
+        }
+
+        const isMember = conversation.participant.some(
+            (p) => p.userId.toString() === userId.toString()
+        )
+
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong cuoc tro chuyen nay" })
+        }
+
+        const pinIndex = conversation.pinnedMessages.findIndex(
+            (p) => p.messageId.toString() === messageId
+        )
+
+        if (pinIndex === -1) {
+            return res.status(404).json({ message: "Tin nhan khong duoc ghim" })
+        }
+
+        conversation.pinnedMessages.splice(pinIndex, 1)
+        await conversation.save()
+
+        const payload = { conversationId, messageId }
+
+        io.to(conversationId).emit("message-unpinned", payload)
+
+        return res.status(200).json(payload)
+    } catch (error) {
+        console.log("Loi khi bo ghim tin nhan", error);
+        return res.status(500).json({ message: "Loi he thong" })
+    }
+}
+
+export const getPinnedMessages = async (req, res) => {
+    try {
+        const { conversationId } = req.params
+        const userId = req.user._id
+
+        const conversation = await Conversation.findById(conversationId)
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" })
+        }
+
+        const isMember = conversation.participant.some(
+            (p) => p.userId.toString() === userId.toString()
+        )
+
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong cuoc tro chuyen nay" })
+        }
+
+        const pinnedMessageIds = conversation.pinnedMessages.map((p) => p.messageId)
+
+        const messages = await Message.find({
+            _id: { $in: pinnedMessageIds }
+        }).populate({
+            path: 'senderId',
+            select: 'displayName avatarURL'
+        })
+
+        // Merge pin info with message data
+        const result = conversation.pinnedMessages.map((pin) => {
+            const msg = messages.find((m) => m._id.toString() === pin.messageId.toString())
+            return {
+                ...pin.toObject(),
+                message: msg ? msg.toObject() : null
+            }
+        }).filter((p) => p.message !== null)
+
+        return res.status(200).json({ pinnedMessages: result })
+    } catch (error) {
+        console.log("Loi khi lay ds tin nhan ghim", error);
+        return res.status(500).json({ message: "Loi he thong" })
+    }
+}
+
+// ==================== SEARCH MESSAGES ====================
+
+export const searchMessages = async (req, res) => {
+    try {
+        const { conversationId } = req.params
+        const { q, limit = 20 } = req.query
+        const userId = req.user._id
+
+        if (!q?.trim()) {
+            return res.status(400).json({ message: "Thieu tu khoa tim kiem" })
+        }
+
+        const conversation = await Conversation.findById(conversationId)
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" })
+        }
+
+        const isMember = conversation.participant.some(
+            (p) => p.userId.toString() === userId.toString()
+        )
+
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong cuoc tro chuyen nay" })
+        }
+
+        const messages = await Message.find({
+            conversationId,
+            content: { $regex: q.trim(), $options: "i" },
+            isRevoked: { $ne: true }
+        })
+            .sort({ createdAt: -1 })
+            .limit(Number(limit))
+            .populate({
+                path: 'senderId',
+                select: 'displayName avatarURL'
+            })
+
+        return res.status(200).json({ messages: messages.map((m) => m.toObject()) })
+    } catch (error) {
+        console.log("Loi khi tim kiem tin nhan", error);
         return res.status(500).json({ message: "Loi he thong" })
     }
 }

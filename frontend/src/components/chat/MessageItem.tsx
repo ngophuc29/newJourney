@@ -4,7 +4,7 @@ import UserAvatar from "./UserAvatar";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { RotateCcw, SmilePlus } from "lucide-react";
+import { RotateCcw, SmilePlus, Reply, Pencil, Pin } from "lucide-react";
 import { useState } from "react";
 import { useChatStore } from "@/stores/useChatStore";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -25,7 +25,7 @@ const MessageItem = ({
     lastMessageStatus,
 }: MessageItemProps) => {
     const [reactionOpen, setReactionOpen] = useState(false);
-    const { revokeMessage, toggleMessageReaction } = useChatStore();
+    const { revokeMessage, toggleMessageReaction, setReplyingTo, setEditingMessage, pinMessage } = useChatStore();
     const { user } = useAuthStore();
     const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
 
@@ -42,6 +42,7 @@ const MessageItem = ({
     );
     const mediaUrl = message.mediaUrl || message.imageUrl || message.imgUrl;
     const canRevoke = message.isOwn && !message.isRevoked && message.type !== "system";
+    const canEdit = message.isOwn && !message.isRevoked && message.type !== "system" && !message.mediaUrl;
     const reactionOptions = ["👍", "❤️", "😂", "😮", "😢", "😡"];
     const reactionCounts = (message.reactions ?? []).reduce<Record<string, number>>(
         (acc, reaction) => {
@@ -49,6 +50,11 @@ const MessageItem = ({
             return acc;
         },
         {},
+    );
+
+    // Check if message is pinned
+    const isPinned = selectedConvo.pinnedMessages?.some(
+        (p) => p.messageId === message._id
     );
 
     const handleReaction = async (emoji: string) => {
@@ -73,6 +79,52 @@ const MessageItem = ({
         }
     };
 
+    const handleReply = () => {
+        setReplyingTo(message);
+    };
+
+    const handleEdit = () => {
+        setEditingMessage(message);
+    };
+
+    const handlePin = async () => {
+        try {
+            await pinMessage(selectedConvo._id, message._id);
+        } catch (error) {
+            console.log("Loi khi ghim tin nhan", error);
+        }
+    };
+
+    const handleScrollToReply = () => {
+        if (!message.replyTo?._id) return;
+        const targetEl = document.getElementById(`message-${message.replyTo._id}`);
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            const cardEl = targetEl.querySelector(".message-card") as HTMLElement;
+            if (cardEl) {
+                // Store original transition
+                const originalTransition = cardEl.style.transition;
+                
+                // Apply highlight instantly
+                cardEl.style.transition = "none";
+                cardEl.style.transform = "scale(1.05)";
+                cardEl.style.boxShadow = "0 0 0 4px #7b19d7, 0 10px 20px rgba(123, 25, 215, 0.4)";
+
+                // Start transition back after 1.5s
+                setTimeout(() => {
+                    cardEl.style.transition = "all 1.0s ease-in-out";
+                    cardEl.style.transform = "";
+                    cardEl.style.boxShadow = "";
+                    
+                    // Restore original transition after the fade-out completes
+                    setTimeout(() => {
+                        cardEl.style.transition = originalTransition;
+                    }, 1000);
+                }, 1500);
+            }
+        }
+    };
+
     if (message.type === "system") {
         return (
             <div className="my-3 flex justify-center px-4">
@@ -88,6 +140,7 @@ const MessageItem = ({
            
 
             <div
+                id={message._id ? `message-${message._id}` : undefined}
                 className={cn(
                     "flex gap-2 message-bounce mt-1",
                     message.isOwn ? "justify-end" : "justify-start"
@@ -115,10 +168,56 @@ const MessageItem = ({
                 >
                     <Card
                         className={cn(
-                            "p-3 overflow-hidden",
-                            message.isOwn ? "bg-chat-bubble-sent border-0" : "bg-chat-bubble-received"
+                            "p-3 overflow-hidden message-card transition-all duration-300",
+                            message.isOwn ? "bg-chat-bubble-sent border-0" : "bg-chat-bubble-received",
+                            isPinned && "ring-1 ring-primary/30"
                         )}
                     >
+                        {/* Reply quote */}
+                        {!message.isRevoked && message.replyTo && (
+                            <div 
+                                onClick={handleScrollToReply}
+                                className={cn(
+                                    "mb-2 rounded-md border-l-2 border-primary/50 pl-2 py-1 cursor-pointer transition-all duration-200",
+                                    message.isOwn 
+                                        ? "bg-white/10 hover:bg-white/20" 
+                                        : "bg-muted/50 hover:bg-muted"
+                                )}
+                            >
+                                <p className={cn(
+                                    "text-[10px] font-semibold",
+                                    message.isOwn ? "text-white/70" : "text-primary"
+                                )}>
+                                    {message.replyTo.senderName || "Người dùng"}
+                                </p>
+                                <p className={cn(
+                                    "text-[11px] truncate max-w-[200px]",
+                                    message.isOwn ? "text-white/60" : "text-muted-foreground"
+                                )}>
+                                    {message.replyTo.content
+                                        ? message.replyTo.content
+                                        : message.replyTo.mediaType === "image"
+                                            ? "📷 Ảnh"
+                                            : message.replyTo.mediaType === "video"
+                                                ? "🎥 Video"
+                                                : "Tin nhắn"}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Pinned indicator */}
+                        {isPinned && (
+                            <div className="mb-1 flex items-center gap-1">
+                                <Pin className="size-2.5 text-primary/60" />
+                                <span className={cn(
+                                    "text-[10px]",
+                                    message.isOwn ? "text-white/50" : "text-muted-foreground"
+                                )}>
+                                    Đã ghim
+                                </span>
+                            </div>
+                        )}
+
                         {message.isRevoked && (
                             <p
                                 className={cn(
@@ -156,15 +255,65 @@ const MessageItem = ({
                                 {message.content}
                             </p>
                         )}
+
+                        {/* Edited tag */}
+                        {!message.isRevoked && message.isEdited && (
+                            <span className={cn(
+                                "text-[10px] italic",
+                                message.isOwn ? "text-white/50" : "text-muted-foreground"
+                            )}>
+                                (đã chỉnh sửa)
+                            </span>
+                        )}
                     </Card>
 
                     {!message.isRevoked && (
                         <div
                             className={cn(
-                                "absolute top-1 flex gap-1 opacity-0 transition-opacity group-hover/message:opacity-100",
-                                message.isOwn ? "-left-16" : "-right-9",
+                                "absolute top-1 flex gap-0.5 opacity-0 transition-opacity group-hover/message:opacity-100",
+                                message.isOwn ? "-left-24" : "-right-[72px]",
                             )}
                         >
+                            {/* Reply button */}
+                            <Button
+                                type="button"
+                                size="icon-xs"
+                                variant="outline"
+                                className="bg-background"
+                                title="Trả lời"
+                                onClick={handleReply}
+                            >
+                                <Reply className="size-3" />
+                            </Button>
+
+                            {/* Edit button */}
+                            {canEdit && (
+                                <Button
+                                    type="button"
+                                    size="icon-xs"
+                                    variant="outline"
+                                    className="bg-background"
+                                    title="Chỉnh sửa"
+                                    onClick={handleEdit}
+                                >
+                                    <Pencil className="size-3" />
+                                </Button>
+                            )}
+
+                            {/* Pin button */}
+                            {!isPinned && (
+                                <Button
+                                    type="button"
+                                    size="icon-xs"
+                                    variant="outline"
+                                    className="bg-background"
+                                    title="Ghim"
+                                    onClick={handlePin}
+                                >
+                                    <Pin className="size-3" />
+                                </Button>
+                            )}
+
                             {canRevoke && (
                                 <Button
                                     type="button"

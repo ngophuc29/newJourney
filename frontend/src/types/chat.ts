@@ -27,6 +27,21 @@ export interface LastMessage {
   };
 }
 
+export interface ReplyTo {
+  _id: string;
+  content: string | null;
+  senderId: string;
+  senderName?: string | null;
+  mediaType?: "image" | "video" | null;
+}
+
+export interface PinnedMessage {
+  messageId: string;
+  pinnedBy: string;
+  pinnedAt: string;
+  message?: Message | null;
+}
+
 export interface Conversation {
   _id: string;
   type: "direct" | "group";
@@ -36,6 +51,7 @@ export interface Conversation {
   seenBy: SeenUser[];
   lastMessage: LastMessage | null;
   unreadCounts: Record<string, number>; // key = userId, value = unread count
+  pinnedMessages?: PinnedMessage[];
   createdAt: string;
   updatedAt: string;
 }
@@ -57,6 +73,9 @@ export interface Message {
   type?: "user" | "system";
   systemType?: string | null;
   reactions?: MessageReaction[];
+  replyTo?: ReplyTo | null;
+  isEdited?: boolean;
+  editedAt?: string | null;
   isRevoked?: boolean;
   revokedAt?: string | null;
   updatedAt?: string | null;

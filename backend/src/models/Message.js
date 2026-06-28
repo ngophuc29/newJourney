@@ -51,6 +51,19 @@ const messageSchema = new mongoose.Schema({
             }
         }
     ],
+    replyTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Message',
+        default: null
+    },
+    isEdited: {
+        type: Boolean,
+        default: false
+    },
+    editedAt: {
+        type: Date,
+        default: null
+    },
     isRevoked: {
         type: Boolean,
         default: false

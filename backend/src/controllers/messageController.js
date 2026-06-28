@@ -37,7 +37,7 @@ export const sendDirectMessage = async (req,res) => {
     
     try {
         // lay nguoi nhan ,noi dung tin nhan , id cua doan hoi thoai
-        const { recipientId, content, conversationId } = req.body
+        const { recipientId, content, conversationId, replyTo } = req.body
         const senderId = req.user._id
         const trimmedContent = content?.trim() ?? ""
         const media = await getUploadedMedia(req.file)
@@ -79,9 +79,19 @@ export const sendDirectMessage = async (req,res) => {
             conversationId: conversation._id,
             senderId,
             content: trimmedContent,
-            ...media
+            ...media,
+            replyTo: replyTo || null
 
         })
+
+        // Populate replyTo for the response
+        if (message.replyTo) {
+            await message.populate({
+                path: 'replyTo',
+                select: 'content senderId mediaType',
+                populate: { path: 'senderId', select: 'displayName' }
+            })
+        }
 
         updateConversationAfterCreateMessage(conversation, message, senderId);
         await conversation.save()
@@ -92,8 +102,20 @@ export const sendDirectMessage = async (req,res) => {
             { path: 'lastMessage.senderId', select: "displayName avatarURL" }
         ])
 
-        emitNewMessage(io,conversation,message)
-        return res.status(201).json({ message })
+        // Format replyTo for client
+        const messageForClient = message.toObject()
+        if (messageForClient.replyTo && messageForClient.replyTo.senderId) {
+            messageForClient.replyTo = {
+                _id: messageForClient.replyTo._id,
+                content: messageForClient.replyTo.content,
+                senderId: messageForClient.replyTo.senderId._id || messageForClient.replyTo.senderId,
+                senderName: messageForClient.replyTo.senderId.displayName || null,
+                mediaType: messageForClient.replyTo.mediaType || null
+            }
+        }
+
+        emitNewMessage(io,conversation, messageForClient)
+        return res.status(201).json({ message: messageForClient })
         
 
     } catch (error) {
@@ -105,7 +127,7 @@ export const sendDirectMessage = async (req,res) => {
 
 export const sendGroupMessage = async (req, res) => {
     try {
-        const { conversationId, content } = req.body
+        const { conversationId, content, replyTo } = req.body
         const senderId = req.user._id
         const conversation = req.conversation
         const trimmedContent = content?.trim() ?? ""
@@ -119,8 +141,18 @@ export const sendGroupMessage = async (req, res) => {
             conversationId,
             senderId,
             content: trimmedContent,
-            ...media
+            ...media,
+            replyTo: replyTo || null
         })
+
+        // Populate replyTo for the response
+        if (message.replyTo) {
+            await message.populate({
+                path: 'replyTo',
+                select: 'content senderId mediaType',
+                populate: { path: 'senderId', select: 'displayName' }
+            })
+        }
 
 
         updateConversationAfterCreateMessage(conversation, message, senderId)
@@ -131,10 +163,23 @@ export const sendGroupMessage = async (req, res) => {
             { path: "seenBy", select: "displayName avatarURL" },
             { path: 'lastMessage.senderId', select: "displayName avatarURL" }
         ])
-        emitNewMessage(io, conversation, message)
+
+        // Format replyTo for client
+        const messageForClient = message.toObject()
+        if (messageForClient.replyTo && messageForClient.replyTo.senderId) {
+            messageForClient.replyTo = {
+                _id: messageForClient.replyTo._id,
+                content: messageForClient.replyTo.content,
+                senderId: messageForClient.replyTo.senderId._id || messageForClient.replyTo.senderId,
+                senderName: messageForClient.replyTo.senderId.displayName || null,
+                mediaType: messageForClient.replyTo.mediaType || null
+            }
+        }
+
+        emitNewMessage(io, conversation, messageForClient)
 
 
-        return res.status(201).json({message})
+        return res.status(201).json({ message: messageForClient })
     } catch (error) {
         console.log("loi khi gui tin nhan nhom", error);
         return res.status(error.status || 500).json({ message:error.message || "Loi he thong" })
@@ -267,6 +312,69 @@ export const revokeMessage = async (req, res) => {
         return res.status(200).json(payload)
     } catch (error) {
         console.log("Loi khi thu hoi tin nhan", error);
+        return res.status(500).json({ message: "Loi he thong" })
+    }
+}
+
+export const editMessage = async (req, res) => {
+    try {
+        const { messageId } = req.params
+        const { content } = req.body
+        const userId = req.user._id
+
+        if (!content?.trim()) {
+            return res.status(400).json({ message: "Noi dung khong duoc de trong" })
+        }
+
+        const message = await Message.findById(messageId)
+
+        if (!message) {
+            return res.status(404).json({ message: "Khong tim thay tin nhan" })
+        }
+
+        if (message.type === "system") {
+            return res.status(400).json({ message: "Khong the chinh sua thong bao he thong" })
+        }
+
+        if (message.senderId.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "Chi co the chinh sua tin nhan cua ban" })
+        }
+
+        if (message.isRevoked) {
+            return res.status(400).json({ message: "Khong the chinh sua tin nhan da thu hoi" })
+        }
+
+        const conversation = await Conversation.findById(message.conversationId)
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" })
+        }
+
+        message.content = content.trim()
+        message.isEdited = true
+        message.editedAt = new Date()
+
+        await message.save()
+
+        // Update lastMessage content if this is the last message
+        if (conversation.lastMessage?._id?.toString() === message._id.toString()) {
+            conversation.lastMessage.content = message.content
+            await conversation.save()
+        }
+
+        const payload = {
+            messageId: message._id,
+            conversationId: message.conversationId,
+            content: message.content,
+            isEdited: true,
+            editedAt: message.editedAt,
+        }
+
+        io.to(message.conversationId.toString()).emit("message-edited", payload)
+
+        return res.status(200).json(payload)
+    } catch (error) {
+        console.log("Loi khi chinh sua tin nhan", error);
         return res.status(500).json({ message: "Loi he thong" })
     }
 }

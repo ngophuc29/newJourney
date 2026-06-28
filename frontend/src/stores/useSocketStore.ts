@@ -33,6 +33,38 @@ type MessageRevokedPayload = {
   revokedAt?: string | null;
 };
 
+type MessageEditedPayload = {
+  messageId: string;
+  conversationId: string;
+  content: string;
+  isEdited: boolean;
+  editedAt: string;
+};
+
+type MessagePinnedPayload = {
+  conversationId: string;
+  messageId: string;
+  pinnedBy: string;
+  pinnedAt: string;
+  message?: Message;
+};
+
+type MessageUnpinnedPayload = {
+  conversationId: string;
+  messageId: string;
+};
+
+type UserTypingPayload = {
+  conversationId: string;
+  userId: string;
+  displayName: string;
+};
+
+type UserStopTypingPayload = {
+  conversationId: string;
+  userId: string;
+};
+
 type FriendRequestPayload = {
   request: FriendRequest;
 };
@@ -127,6 +159,54 @@ export const useSocketStore = create<SocketState>((set, get) => ({
         useChatStore
           .getState()
           .markMessageRevoked(conversationId, messageId, revokedAt);
+      },
+    );
+
+    // ==================== NEW: Message Edited ====================
+    socket.on(
+      "message-edited",
+      ({ conversationId, messageId, content, editedAt }: MessageEditedPayload) => {
+        useChatStore
+          .getState()
+          .updateEditedMessage(conversationId, messageId, content, editedAt);
+      },
+    );
+
+    // ==================== NEW: Pin/Unpin Messages ====================
+    socket.on(
+      "message-pinned",
+      ({ conversationId, messageId, pinnedBy, pinnedAt, message }: MessagePinnedPayload) => {
+        useChatStore
+          .getState()
+          .addPinnedMessage(conversationId, { messageId, pinnedBy, pinnedAt, message });
+      },
+    );
+
+    socket.on(
+      "message-unpinned",
+      ({ conversationId, messageId }: MessageUnpinnedPayload) => {
+        useChatStore
+          .getState()
+          .removePinnedMessage(conversationId, messageId);
+      },
+    );
+
+    // ==================== NEW: Typing Indicator ====================
+    socket.on(
+      "user-typing",
+      ({ conversationId, userId, displayName }: UserTypingPayload) => {
+        useChatStore
+          .getState()
+          .setTypingUser(conversationId, { userId, displayName });
+      },
+    );
+
+    socket.on(
+      "user-stop-typing",
+      ({ conversationId, userId }: UserStopTypingPayload) => {
+        useChatStore
+          .getState()
+          .removeTypingUser(conversationId, userId);
       },
     );
 

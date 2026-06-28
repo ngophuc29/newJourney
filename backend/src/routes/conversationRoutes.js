@@ -1,6 +1,6 @@
 import express from "express"
 import { checkFriendShip } from "../middlewares/friendMiddle.js"
-import { addGroupMembers, createConversation, getConversation, getMessages, leaveGroup, markAsSeen, removeGroupMember, renameGroup, transferGroupOwner } from "../controllers/conversationController.js"
+import { addGroupMembers, createConversation, getConversation, getMessages, getPinnedMessages, leaveGroup, markAsSeen, pinMessage, removeGroupMember, renameGroup, searchMessages, transferGroupOwner, unpinMessage } from "../controllers/conversationController.js"
 
 const router = express.Router()
 
@@ -13,6 +13,14 @@ router.patch('/:conversationId/group/owner', transferGroupOwner)
 router.post('/:conversationId/group/leave', leaveGroup)
 router.get('/:conversationId/messages', getMessages)
 router.patch("/:conversationId/seen",markAsSeen)
+
+// Pin messages
+router.post('/:conversationId/pin', pinMessage)
+router.delete('/:conversationId/pin/:messageId', unpinMessage)
+router.get('/:conversationId/pins', getPinnedMessages)
+
+// Search messages
+router.get('/:conversationId/search', searchMessages)
 
 
 export default router
