@@ -55,6 +55,40 @@ const SearchMessagesDialog = ({ open, onOpenChange }: SearchMessagesDialogProps)
     setHasSearched(false);
   };
 
+  const handleSelectMessage = (msgId: string) => {
+    onOpenChange(false);
+    
+    // Allow dialog closing animation to start before scrolling
+    setTimeout(() => {
+      const targetEl = document.getElementById(`message-${msgId}`);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        const cardEl = targetEl.querySelector(".message-card") as HTMLElement;
+        if (cardEl) {
+          // Store original transition
+          const originalTransition = cardEl.style.transition;
+          
+          // Apply highlight instantly
+          cardEl.style.transition = "none";
+          cardEl.style.transform = "scale(1.05)";
+          cardEl.style.boxShadow = "0 0 0 4px #ef4444, 0 10px 20px rgba(239, 68, 68, 0.4)";
+
+          // Start transition back after 1.5s
+          setTimeout(() => {
+            cardEl.style.transition = "all 1.0s ease-in-out";
+            cardEl.style.transform = "";
+            cardEl.style.boxShadow = "";
+            
+            // Restore original transition after the fade-out completes
+            setTimeout(() => {
+              cardEl.style.transition = originalTransition;
+            }, 1000);
+          }, 1500);
+        }
+      }
+    }, 200);
+  };
+
   const highlightMatch = (text: string, searchQuery: string) => {
     if (!searchQuery.trim() || !text) return text;
 
@@ -135,6 +169,7 @@ const SearchMessagesDialog = ({ open, onOpenChange }: SearchMessagesDialogProps)
               return (
                 <div
                   key={msg._id}
+                  onClick={() => handleSelectMessage(msg._id)}
                   className="cursor-pointer rounded-lg border border-transparent px-3 py-2 transition-colors hover:border-border hover:bg-muted/50"
                 >
                   <div className="mb-0.5 flex items-center justify-between">

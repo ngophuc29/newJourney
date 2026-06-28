@@ -108,7 +108,7 @@ const MessageItem = ({
                 // Apply highlight instantly
                 cardEl.style.transition = "none";
                 cardEl.style.transform = "scale(1.05)";
-                cardEl.style.boxShadow = "0 0 0 4px #7b19d7, 0 10px 20px rgba(123, 25, 215, 0.4)";
+                cardEl.style.boxShadow = "0 0 0 4px #ef4444, 0 10px 20px rgba(239, 68, 68, 0.4)";
 
                 // Start transition back after 1.5s
                 setTimeout(() => {
@@ -270,8 +270,8 @@ const MessageItem = ({
                     {!message.isRevoked && (
                         <div
                             className={cn(
-                                "absolute top-1 flex gap-0.5 opacity-0 transition-opacity group-hover/message:opacity-100",
-                                message.isOwn ? "-left-24" : "-right-[72px]",
+                                "absolute top-1 flex gap-0.5 opacity-0 transition-opacity z-20 group-hover/message:opacity-100",
+                                message.isOwn ? "right-full mr-2" : "left-full ml-2",
                             )}
                         >
                             {/* Reply button */}
