@@ -596,6 +596,26 @@ export const useChatStore = create<ChatState>()(
         }
       },
 
+      // ==================== Forward Messages ====================
+      forwardMessage: async (messageId, targetConversationIds) => {
+        try {
+          await chatService.forwardMessage(messageId, targetConversationIds);
+        } catch (error) {
+          console.log("Loi khi chuyen tiep tin nhan", error);
+          throw error;
+        }
+      },
+
+      // ==================== Media Gallery ====================
+      getConversationMedia: async (conversationId) => {
+        try {
+          return await chatService.getConversationMedia(conversationId);
+        } catch (error) {
+          console.log("Loi khi lay thu vien phuong tien", error);
+          return [];
+        }
+      },
+
       // ==================== Typing Indicator ====================
       setTypingUser: (conversationId, user) => {
         set((state) => {

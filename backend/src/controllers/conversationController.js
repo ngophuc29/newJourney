@@ -206,6 +206,10 @@ export const getMessages = async (req, res) => {
                 select: 'content senderId mediaType',
                 populate: { path: 'senderId', select: 'displayName' }
             })
+            .populate({
+                path: 'forwardedFrom',
+                select: 'displayName avatarURL'
+            })
 
         let nextCursor = null
 
@@ -737,3 +741,36 @@ export const searchMessages = async (req, res) => {
         return res.status(500).json({ message: "Loi he thong" })
     }
 }
+
+export const getConversationMedia = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const userId = req.user._id;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Khong tim thay cuoc tro chuyen" });
+        }
+
+        const isMember = conversation.participant.some(
+            (p) => p.userId.toString() === userId.toString()
+        );
+        if (!isMember) {
+            return res.status(403).json({ message: "Ban khong o trong cuoc tro chuyen nay" });
+        }
+
+        const mediaMessages = await Message.find({
+            conversationId,
+            mediaUrl: { $ne: null },
+            isRevoked: false
+        })
+            .sort({ createdAt: -1 })
+            .select("_id senderId mediaUrl mediaType createdAt")
+            .populate("senderId", "displayName avatarURL");
+
+        return res.status(200).json({ media: mediaMessages.map(m => m.toObject()) });
+    } catch (error) {
+        console.log("Loi khi lay thu vien phuong tien", error);
+        return res.status(500).json({ message: "Loi he thong" });
+    }
+};

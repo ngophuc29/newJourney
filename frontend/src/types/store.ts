@@ -127,6 +127,10 @@ export interface ChatState {
   // Search
   searchMessages: (conversationId: string, query: string) => Promise<Message[]>;
 
+  // Forward & Media Gallery
+  forwardMessage: (messageId: string, targetConversationIds: string[]) => Promise<void>;
+  getConversationMedia: (conversationId: string) => Promise<Message[]>;
+
   // Typing
   setTypingUser: (conversationId: string, user: TypingUser) => void;
   removeTypingUser: (conversationId: string, userId: string) => void;

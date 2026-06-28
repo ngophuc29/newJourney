@@ -378,3 +378,72 @@ export const editMessage = async (req, res) => {
         return res.status(500).json({ message: "Loi he thong" })
     }
 }
+
+export const forwardMessage = async (req, res) => {
+    try {
+        const { messageId, targetConversationIds } = req.body;
+        const senderId = req.user._id;
+
+        if (!messageId || !targetConversationIds || !Array.isArray(targetConversationIds) || targetConversationIds.length === 0) {
+            return res.status(400).json({ message: "Thieu thong tin tin nhan hoac cuoc tro chuyen dich" });
+        }
+
+        const sourceMessage = await Message.findById(messageId);
+        if (!sourceMessage) {
+            return res.status(404).json({ message: "Khong tim thay tin nhan goc" });
+        }
+
+        if (sourceMessage.isRevoked) {
+            return res.status(400).json({ message: "Khong the chuyen tiep tin nhan da bi thu hoi" });
+        }
+
+        const forwardedMessages = [];
+
+        for (const targetConvoId of targetConversationIds) {
+            const conversation = await Conversation.findById(targetConvoId);
+            if (!conversation) continue;
+
+            const isMember = conversation.participant.some(
+                (p) => p.userId.toString() === senderId.toString()
+            );
+            if (!isMember) continue;
+
+            // Create new message in target conversation
+            const newMessage = await Message.create({
+                conversationId: targetConvoId,
+                senderId,
+                content: sourceMessage.content,
+                imageUrl: sourceMessage.imageUrl,
+                mediaUrl: sourceMessage.mediaUrl,
+                mediaType: sourceMessage.mediaType,
+                mediaPublicId: sourceMessage.mediaPublicId,
+                isForwarded: true,
+                forwardedFrom: sourceMessage.senderId
+            });
+
+            // Populate forwardedFrom
+            await newMessage.populate({
+                path: 'forwardedFrom',
+                select: 'displayName avatarURL'
+            });
+
+            updateConversationAfterCreateMessage(conversation, newMessage, senderId);
+            await conversation.save();
+
+            await conversation.populate([
+                { path: 'participant.userId', select: "displayName avatarURL" },
+                { path: "seenBy", select: "displayName avatarURL" },
+                { path: 'lastMessage.senderId', select: "displayName avatarURL" }
+            ]);
+
+            const messageForClient = newMessage.toObject();
+            emitNewMessage(io, conversation, messageForClient);
+            forwardedMessages.push(messageForClient);
+        }
+
+        return res.status(201).json({ messages: forwardedMessages });
+    } catch (error) {
+        console.log("Loi khi chuyen tiep tin nhan", error);
+        return res.status(500).json({ message: "Loi he thong" });
+    }
+};

@@ -137,4 +137,14 @@ export const chatService = {
     const res = await api.get(`/conversation/${conversationId}/search?q=${encodeURIComponent(query)}`);
     return res.data.messages as Message[];
   },
+
+  // ==================== NEW: Forward & Media Gallery ====================
+  async forwardMessage(messageId: string, targetConversationIds: string[]) {
+    const res = await api.post(`/message/forward`, { messageId, targetConversationIds });
+    return res.data.messages;
+  },
+  async getConversationMedia(conversationId: string) {
+    const res = await api.get(`/conversation/${conversationId}/media`);
+    return res.data.media as Message[];
+  },
 };

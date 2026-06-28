@@ -4,10 +4,11 @@ import UserAvatar from "./UserAvatar";
 import { Card } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { RotateCcw, SmilePlus, Reply, Pencil, Pin } from "lucide-react";
+import { RotateCcw, SmilePlus, Reply, Pencil, Pin, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useChatStore } from "@/stores/useChatStore";
 import { useAuthStore } from "@/stores/useAuthStore";
+import ForwardMessagesDialog from "./ForwardMessagesDialog";
 
 interface MessageItemProps {
     message: Message;
@@ -25,6 +26,7 @@ const MessageItem = ({
     lastMessageStatus,
 }: MessageItemProps) => {
     const [reactionOpen, setReactionOpen] = useState(false);
+    const [forwardOpen, setForwardOpen] = useState(false);
     const { revokeMessage, toggleMessageReaction, setReplyingTo, setEditingMessage, pinMessage } = useChatStore();
     const { user } = useAuthStore();
     const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
@@ -173,6 +175,19 @@ const MessageItem = ({
                             isPinned && "ring-1 ring-primary/30"
                         )}
                     >
+                        {/* Forwarded indicator */}
+                        {message.isForwarded && (
+                            <div className="mb-1.5 flex items-center gap-1">
+                                <span className={cn(
+                                    "text-[10px] italic flex items-center gap-1 font-medium",
+                                    message.isOwn ? "text-white/70" : "text-muted-foreground"
+                                )}>
+                                    <Share2 className="size-2.5" />
+                                    Chuyển tiếp từ {message.forwardedFrom?.displayName || "Người dùng"}
+                                </span>
+                            </div>
+                        )}
+
                         {/* Reply quote */}
                         {!message.isRevoked && message.replyTo && (
                             <div 
@@ -284,6 +299,18 @@ const MessageItem = ({
                                 onClick={handleReply}
                             >
                                 <Reply className="size-3" />
+                            </Button>
+
+                            {/* Forward button */}
+                            <Button
+                                type="button"
+                                size="icon-xs"
+                                variant="outline"
+                                className="bg-background"
+                                title="Chuyển tiếp"
+                                onClick={() => setForwardOpen(true)}
+                            >
+                                <Share2 className="size-3" />
                             </Button>
 
                             {/* Edit button */}
@@ -410,6 +437,13 @@ const MessageItem = ({
                     )}
                 </div>
             </div>
+            {forwardOpen && (
+                <ForwardMessagesDialog
+                    open={forwardOpen}
+                    onOpenChange={setForwardOpen}
+                    messageId={message._id}
+                />
+            )}
         </>
     );
 };

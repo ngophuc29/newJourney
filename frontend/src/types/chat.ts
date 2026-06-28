@@ -81,6 +81,12 @@ export interface Message {
   updatedAt?: string | null;
   createdAt: string;
   isOwn?: boolean;
+  isForwarded?: boolean;
+  forwardedFrom?: {
+    _id: string;
+    displayName: string;
+    avatarURL?: string | null;
+  } | null;
 }
 
 export interface MessageReaction {

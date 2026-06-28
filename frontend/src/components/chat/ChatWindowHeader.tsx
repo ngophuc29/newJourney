@@ -10,11 +10,11 @@ import { useAuthStore } from '@/stores/useAuthStore'
 import { useSocketStore } from '@/stores/useSocketStore'
 import { useState } from 'react'
 import { Button } from '../ui/button'
-import { Settings, Search } from 'lucide-react'
+import { Settings, Search, Image } from 'lucide-react'
 import GroupSettingsDialog from './GroupSettingsDialog'
 import SearchMessagesDialog from './SearchMessagesDialog'
 
-const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
+const ChatWindowHeader = ({ chat, onToggleMedia }: { chat?: Conversation; onToggleMedia?: () => void }) => {
     
     const { conversations, activeConversationId } = useChatStore()
     const { onlineUsers } = useSocketStore()
@@ -87,6 +87,18 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                   >
                       <Search className="size-4" />
                       <span className="sr-only">Tim kiem</span>
+                  </Button>
+
+                  {/* Media Gallery button */}
+                  <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      onClick={onToggleMedia}
+                      title="Kho lưu trữ phương tiện"
+                  >
+                      <Image className="size-4" />
+                      <span className="sr-only">Thu vien phuong tien</span>
                   </Button>
 
                   <SearchMessagesDialog
