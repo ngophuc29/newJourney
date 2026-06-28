@@ -66,12 +66,17 @@ const StoryTray = () => {
                 : "border-2 border-dashed border-muted-foreground/30" // Viền nét đứt khi chưa đăng gì
             )}
           >
-            <div className="size-full rounded-full bg-background p-[2px]">
+            <div className="size-full rounded-full bg-background p-[2px] relative">
               <UserAvatar
                 type="chat"
                 name={user.displayName}
                 avatarURL={user.avatarURL ?? undefined}
               />
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
+                  <Loader2 className="size-4 animate-spin text-white" />
+                </div>
+              )}
             </div>
           </div>
           <button

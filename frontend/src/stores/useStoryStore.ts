@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import api from "@/lib/axios";
+import { useAuthStore } from "./useAuthStore";
 
 export interface StoryItem {
   _id: string;
@@ -23,6 +24,7 @@ interface StoryState {
   stories: UserStories[];
   loading: boolean;
   activeUserIndex: number | null; // For viewing
+  activeStoryIndex: number; // Current story index being viewed
   viewerOpen: boolean;
   fetchStories: () => Promise<void>;
   uploadStory: (file: File) => Promise<void>;
@@ -34,6 +36,7 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   stories: [],
   loading: false,
   activeUserIndex: null,
+  activeStoryIndex: 0,
   viewerOpen: false,
 
   fetchStories: async () => {
@@ -92,7 +95,7 @@ export const useStoryStore = create<StoryState>((set, get) => ({
       await api.patch(`/stories/${storyId}/view`);
       // Cập nhật viewers ở local state
       set((state) => {
-        const currentUserId = JSON.parse(localStorage.getItem("user-storage") || "{}")?.state?.user?._id;
+        const currentUserId = useAuthStore.getState().user?._id;
         if (!currentUserId) return state;
 
         const updatedStories = state.stories.map((us) => ({
@@ -113,6 +116,6 @@ export const useStoryStore = create<StoryState>((set, get) => ({
   },
 
   setViewerState: (open: boolean, userIndex: number | null) => {
-    set({ viewerOpen: open, activeUserIndex: userIndex });
+    set({ viewerOpen: open, activeUserIndex: userIndex, activeStoryIndex: 0 });
   },
 }));

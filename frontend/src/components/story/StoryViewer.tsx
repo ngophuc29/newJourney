@@ -9,9 +9,8 @@ const STORY_DURATION = 5000; // 5s
 
 const StoryViewer = () => {
   const { user } = useAuthStore();
-  const { stories, activeUserIndex, viewerOpen, setViewerState, viewStory } = useStoryStore();
+  const { stories, activeUserIndex, activeStoryIndex, viewerOpen, setViewerState, viewStory } = useStoryStore();
 
-  const [activeStoryIndex, setActiveStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -49,7 +48,6 @@ const StoryViewer = () => {
 
   const handleClose = () => {
     setViewerState(false, null);
-    setActiveStoryIndex(0);
     setProgress(0);
   };
 
@@ -58,12 +56,11 @@ const StoryViewer = () => {
 
     if (activeStoryIndex < currentUserStories.stories.length - 1) {
       // Go to next story of same user
-      setActiveStoryIndex((prev) => prev + 1);
+      useStoryStore.setState({ activeStoryIndex: activeStoryIndex + 1 });
     } else {
       // Go to next user
       if (activeUserIndex !== null && activeUserIndex < stories.length - 1) {
-        useStoryStore.setState({ activeUserIndex: activeUserIndex + 1 });
-        setActiveStoryIndex(0);
+        useStoryStore.setState({ activeUserIndex: activeUserIndex + 1, activeStoryIndex: 0 });
       } else {
         // End of all stories
         handleClose();
@@ -76,14 +73,15 @@ const StoryViewer = () => {
 
     if (activeStoryIndex > 0) {
       // Go to previous story of same user
-      setActiveStoryIndex((prev) => prev - 1);
+      useStoryStore.setState({ activeStoryIndex: activeStoryIndex - 1 });
     } else {
       // Go to previous user
       if (activeUserIndex !== null && activeUserIndex > 0) {
-        useStoryStore.setState({ activeUserIndex: activeUserIndex - 1 });
-        // Set to the last story of the previous user
         const prevUserStories = stories[activeUserIndex - 1];
-        setActiveStoryIndex(prevUserStories.stories.length - 1);
+        useStoryStore.setState({ 
+          activeUserIndex: activeUserIndex - 1, 
+          activeStoryIndex: prevUserStories.stories.length - 1 
+        });
       } else {
         // Start of first story, reset progress
         setProgress(0);
