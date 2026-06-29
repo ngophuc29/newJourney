@@ -1,14 +1,14 @@
 export interface User {
-    _id: string,
-    username: string,
-    email: string,
-    displayName: string,
-    avatarURL?: string,
-    bio?: string,
-    phone?: string,
-    createdAt?: string,
-    updatedAt ?:String
-    
+    _id: string;
+    username: string;
+    email: string;
+    displayName: string;
+    avatarURL?: string;
+    bio?: string;
+    phone?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    blockedUsers?: any[];
 }
 
 export interface Friend {

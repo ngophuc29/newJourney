@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import UserAvatar from "./UserAvatar";
 import { Button } from "../ui/button";
-import { MessageSquare, ShieldAlert, ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { useChatStore } from "@/stores/useChatStore";
 import { toast } from "sonner";
 
 interface UserCardDialogProps {
@@ -25,7 +24,6 @@ interface UserProfileData {
 
 const UserCardDialog = ({ userId, open, onOpenChange }: UserCardDialogProps) => {
   const { user: currentUser, setUser } = useAuthStore();
-  const { conversations, setSelectedConversation } = useChatStore();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -57,48 +55,6 @@ const UserCardDialog = ({ userId, open, onOpenChange }: UserCardDialogProps) => 
   const isBlocked = currentUser?.blockedUsers?.map((id: any) => 
     typeof id === "object" ? id._id || id.toString() : id.toString()
   ).includes(userId);
-
-  const handleMessage = () => {
-    // Find existing direct conversation with this user
-    const existingConvo = conversations.find(
-      (c) =>
-        c.type === "direct" &&
-        c.participants.some((p) => p._id === userId)
-    );
-
-    if (existingConvo) {
-      setSelectedConversation(existingConvo);
-      onOpenChange(false);
-    } else {
-      // Create new chat or just trigger selection via ChatStore
-      // The CreateNewChat component handles creating a conversation. We can trigger it by creating a conversation directly:
-      setActionLoading(true);
-      api.post("/conversation", {
-        type: "direct",
-        memberIds: [userId]
-      })
-      .then((res) => {
-        // Refresh conversations and select the new one
-        useChatStore.getState().fetchConversation();
-        // Set timeout to allow fetch to complete
-        setTimeout(() => {
-          const updatedConversations = useChatStore.getState().conversations;
-          const newConvo = updatedConversations.find(c => c._id === res.data._id || c.participants.some(p => p._id === userId));
-          if (newConvo) {
-            setSelectedConversation(newConvo);
-          }
-        }, 500);
-        onOpenChange(false);
-      })
-      .catch((err) => {
-        console.error("Lỗi khi tạo hội thoại:", err);
-        toast.error("Không thể tạo cuộc trò chuyện");
-      })
-      .finally(() => {
-        setActionLoading(false);
-      });
-    }
-  };
 
   const handleBlockToggle = async () => {
     setActionLoading(true);

@@ -43,10 +43,8 @@ const GifPicker = ({ onSelect }: GifPickerProps) => {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger className="cursor-pointer hover:text-primary transition-colors" asChild>
-        <button type="button" title="Gửi ảnh GIF">
-          <ImageIcon className="size-4 text-muted-foreground" />
-        </button>
+      <PopoverTrigger className="cursor-pointer hover:text-primary transition-colors flex items-center justify-center size-8 rounded-md hover:bg-muted" title="Gửi ảnh GIF">
+        <ImageIcon className="size-4 text-muted-foreground" />
       </PopoverTrigger>
 
       <PopoverContent
