@@ -32,7 +32,7 @@ interface StoryState {
   setViewerState: (open: boolean, userIndex: number | null) => void;
 }
 
-export const useStoryStore = create<StoryState>((set, get) => ({
+export const useStoryStore = create<StoryState>((set) => ({
   stories: [],
   loading: false,
   activeUserIndex: null,

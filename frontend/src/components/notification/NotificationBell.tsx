@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Bell, Check, Trash2, UserPlus, MessageSquare, Users, Eye } from "lucide-react";
+import { Bell, Trash2, UserPlus, MessageSquare, Users, Eye } from "lucide-react";
 import { useNotificationStore, type NotificationItem } from "@/stores/useNotificationStore";
 import { useFriendStore } from "@/stores/useFriendStore";
 import { useChatStore } from "@/stores/useChatStore";
@@ -12,7 +12,7 @@ const NotificationBell = () => {
   const [open, setOpen] = useState(false);
   const { notifications, fetchNotifications, markAsRead, deleteNotification } = useNotificationStore();
   const { acceptFriendRequest, declineFriendRequest } = useFriendStore();
-  const { openDirectConversation, setActionConversation } = useChatStore();
+  const { setActionConversation } = useChatStore();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

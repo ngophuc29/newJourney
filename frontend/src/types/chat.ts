@@ -32,7 +32,7 @@ export interface ReplyTo {
   content: string | null;
   senderId: string;
   senderName?: string | null;
-  mediaType?: "image" | "video" | "file" | null;
+  mediaType?: "image" | "video" | "file" | "audio" | null;
 }
 
 export interface PinnedMessage {
@@ -68,10 +68,11 @@ export interface Message {
   imgUrl?: string | null;
   imageUrl?: string | null;
   mediaUrl?: string | null;
-  mediaType?: "image" | "video" | "file" | null;
+  mediaType?: "image" | "video" | "file" | "audio" | null;
   mediaPublicId?: string | null;
   fileName?: string | null;
   fileSize?: number | null;
+  duration?: number | null;
   type?: "user" | "system";
   systemType?: string | null;
   mentions?: string[];

@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { X, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { useStoryStore } from "@/stores/useStoryStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import UserAvatar from "../chat/UserAvatar";
-import { cn } from "@/lib/utils";
 
 const STORY_DURATION = 5000; // 5s
 
@@ -12,7 +11,6 @@ const StoryViewer = () => {
   const { stories, activeUserIndex, activeStoryIndex, viewerOpen, setViewerState, viewStory } = useStoryStore();
 
   const [progress, setProgress] = useState(0);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Lấy dữ liệu hiện tại
   const currentUserStories = activeUserIndex !== null ? stories[activeUserIndex] : null;
