@@ -7,11 +7,13 @@ import UserAvatar from './UserAvatar'
 import StatusBadge from './StatusBadge'
 import UnreadCountBadge from './UnreadCountBadge'
 import { useSocketStore } from '@/stores/useSocketStore'
-const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
+import { useSidebar } from '@/components/ui/sidebar'
 
+const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
   const { user } = useAuthStore()
-  const { activeConversationId, setActionConversation, messages,fetchMessages } = useChatStore()
-    const { onlineUsers } = useSocketStore()
+  const { activeConversationId, setActionConversation, messages, fetchMessages } = useChatStore()
+  const { onlineUsers } = useSocketStore()
+  const { setOpenMobile } = useSidebar()
 
   if (!user) return null
 
@@ -23,13 +25,12 @@ const DirectMessageCard = ({ convo }: { convo: Conversation }) => {
 
   const lastMessage = convo.lastMessage?.content ?? "";
 
-
   const handleSelectionConversation = async (id: string)=>{
     setActionConversation(id)
+    setOpenMobile(false)
     if (!messages[id]) {
       await fetchMessages();
     }
-
   }
   return (
     <ChatCard

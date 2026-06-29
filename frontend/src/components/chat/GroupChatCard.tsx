@@ -5,13 +5,14 @@ import { useChatStore } from '@/stores/useChatStore'
  
 import GroupChatAvatar from './GroupChatAvatar'
 import UnreadCountBadge from './UnreadCountBadge'
-const GroupChatCard = ({ convo }: { convo: Conversation }) => {
+import { useSidebar } from '@/components/ui/sidebar'
 
+const GroupChatCard = ({ convo }: { convo: Conversation }) => {
     const { user } = useAuthStore()
     const { activeConversationId, setActionConversation, messages, fetchMessages } = useChatStore()
+    const { setOpenMobile } = useSidebar()
 
     if (!user) return null
-
 
     const unreadCount = convo.unreadCounts[user._id]
     const name = convo.group?.name ?? ''
@@ -19,10 +20,10 @@ const GroupChatCard = ({ convo }: { convo: Conversation }) => {
 
     const handleSelectionConversation = async (id: string) => {
         setActionConversation(id)
+        setOpenMobile(false)
         if (!messages[id]) {
             await fetchMessages()
         }
-
     }
     return (
         <ChatCard

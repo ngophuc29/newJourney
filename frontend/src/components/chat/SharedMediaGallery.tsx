@@ -32,7 +32,7 @@ const SharedMediaGallery = ({ convoId, onClose }: SharedMediaGalleryProps) => {
   }, [convoId, getConversationMedia]);
 
   return (
-    <div className="w-80 border-l border-border bg-background h-full flex flex-col shrink-0 animate-in slide-in-from-right duration-200">
+    <div className="fixed md:relative inset-y-0 right-0 z-40 w-full md:w-80 border-l border-border bg-background h-full flex flex-col shrink-0 animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="p-3 border-b border-border/50 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
