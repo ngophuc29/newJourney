@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { ShieldAlert, ShieldCheck, Loader2 } from "lucide-react";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useChatStore } from "@/stores/useChatStore";
 import { toast } from "sonner";
 
 interface UserCardDialogProps {
@@ -77,6 +78,8 @@ const UserCardDialog = ({ userId, open, onOpenChange }: UserCardDialogProps) => 
           setUser({ ...currentUser, blockedUsers: updatedBlocked });
         }
       }
+      // Đồng bộ danh sách hội thoại
+      useChatStore.getState().fetchConversation();
     } catch (error) {
       console.error("Lỗi khi thay đổi trạng thái chặn:", error);
       toast.error("Thao tác thất bại");

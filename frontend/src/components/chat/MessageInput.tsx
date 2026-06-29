@@ -429,13 +429,15 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         );
         useAuthStore.getState().setUser({ ...user, blockedUsers: updatedBlocked });
       }
+      // Cập nhật lại danh sách hội thoại của người chặn
+      useChatStore.getState().fetchConversation();
     } catch (error) {
       console.error("Lỗi khi bỏ chặn:", error);
       toast.error("Không thể bỏ chặn");
     }
   };
 
-  if (selectedConvo.type === "direct" && (selectedConvo.weBlockedPartner || isBlockedByUs)) {
+  if (selectedConvo.type === "direct" && isBlockedByUs) {
     return (
       <div className="p-4 text-center bg-background border-t border-border/40">
         <div className="py-3 px-4 text-sm font-semibold text-muted-foreground bg-muted/30 rounded-2xl border border-dashed border-border/50 flex flex-col sm:flex-row items-center justify-center gap-2">
