@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import {  Moon, Sun } from "lucide-react"
+import {  Moon, Sun, Home } from "lucide-react"
 import { Switch } from "../ui/switch"
 import CreateNewChat from "../chat/CreateNewChat"
 import NewGroupChatModel from "../chat/NewGroupChatModel"
@@ -30,6 +30,7 @@ import { useChatStore } from "@/stores/useChatStore"
 import ConversationSkeleton from "../skeleton/ConversationSkeleton"
 import NotificationBell from "../notification/NotificationBell"
 import StoryTray from "../story/StoryTray"
+import { Link } from "react-router-dom"
 
 
 
@@ -76,6 +77,20 @@ const {convoLoading} =useChatStore()
 
 
       <SidebarContent className="beautiful-scollbar">
+        {/* Back to Feed */}
+        <SidebarGroup className="pb-0">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link to="/">
+                  <Home className="size-4 text-primary" />
+                  <span className="font-bold text-primary">Quay lại Bảng tin</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+
         {/* Story Tray */}
         <StoryTray />
 

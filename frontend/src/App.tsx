@@ -6,6 +6,11 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import { Toaster }from 'sonner'
 import ProtectedRoute from "./components/auth/ProtectedRoute"
+import MainLayout from "./components/layout/MainLayout"
+import FeedPage from "./pages/FeedPage"
+import ExplorePage from "./pages/ExplorePage"
+import ProfilePage from "./pages/ProfilePage"
+import PostDetailPage from "./pages/PostDetailPage"
 import { useThemeStore } from "./stores/useThemeStore"
 import { useEffect, useState } from "react"
 import { useAuthStore } from "./stores/useAuthStore"
@@ -201,7 +206,13 @@ function App() {
           <Route element={<ResetPasswordPage />} path="/reset-password" />
           {/* protected route */}
           <Route path="/" element={<ProtectedRoute/>}>
-            <Route index element={<ChatApp/>} />
+            <Route element={<MainLayout/>}>
+              <Route index element={<FeedPage />} />
+              <Route path="explore" element={<ExplorePage />} />
+              <Route path="profile/:username" element={<ProfilePage />} />
+              <Route path="post/:postId" element={<PostDetailPage />} />
+            </Route>
+            <Route path="chat" element={<ChatApp />} />
           </Route>
 
       </Routes>

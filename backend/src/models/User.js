@@ -36,6 +36,12 @@ const userScherma = new mongoose.Schema({
         type: String ,
         maxlength : 500
     },
+    coverPhotoURL: {
+        type: String
+    },
+    coverPhotoID: {
+        type: String
+    },
     phone: {
         type: String,
         sparse : true // cho phép null nhưng k dc trùng

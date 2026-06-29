@@ -68,6 +68,38 @@ export const uploadAvatar = async (req, res) => {
     }
 };
 
+export const uploadCoverPhoto = async (req, res) => {
+    try {
+        const file = req.file;
+        const userId = req.user._id;
+
+        if (!file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const result = await uploadImageFromBuffer(file.buffer, {
+            folder: "phuc_chat/covers",
+            transformation: [{ width: 1200, height: 400, crop: "fill" }]
+        });
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                coverPhotoURL: result.secure_url,
+                coverPhotoID: result.public_id,
+            },
+            {
+                new: true,
+            }
+        ).select("coverPhotoURL");
+
+        return res.status(200).json({ coverPhotoURL: updatedUser.coverPhotoURL });
+    } catch (error) {
+        console.error("Lỗi xảy ra khi upload cover photo", error);
+        return res.status(500).json({ message: "Upload failed" });
+    }
+};
+
 export const updateProfile = async (req, res) => {
     try {
         const { displayName, bio, phone } = req.body;

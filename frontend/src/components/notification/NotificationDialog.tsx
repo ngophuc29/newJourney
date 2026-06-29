@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
     Dialog,
     DialogContent,
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 import { useChatStore } from "@/stores/useChatStore";
 import UserAvatar from "../chat/UserAvatar";
-import { Bell, Check, Trash2, MessageSquare, UserPlus, Users, Loader2 } from "lucide-react";
+import { Bell, Check, Trash2, MessageSquare, UserPlus, Users, Loader2, Heart, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -19,6 +20,8 @@ interface NotificationDialogProps {
 }
 
 const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const { notifications, loading, fetchNotifications, markAsRead, deleteNotification } = useNotificationStore();
     const { conversations, setActionConversation } = useChatStore();
 
@@ -71,6 +74,20 @@ const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
             }
         } else if (notification.type === "friend_request") {
             toast.info("Vui lòng kiểm tra tab 'Bạn bè' hoặc 'Lời mời kết bạn' trong menu.");
+        } else if (notification.type === "follow") {
+            if (notification.senderId?.username) {
+                navigate(`/profile/${notification.senderId.username}`);
+                setOpen(false);
+            }
+        } else if (notification.type === "post_like" || notification.type === "post_comment") {
+            if (notification.relatedId) {
+                if (location.pathname === `/post/${notification.relatedId}`) {
+                    window.dispatchEvent(new CustomEvent("refresh-post", { detail: { postId: notification.relatedId } }));
+                } else {
+                    navigate(`/post/${notification.relatedId}`);
+                }
+                setOpen(false);
+            }
         }
     };
 
@@ -91,6 +108,21 @@ const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
                 return {
                     text: `${name} đã thêm bạn vào nhóm chat mới.`,
                     icon: <Users className="size-4 text-green-500" />,
+                };
+            case "follow":
+                return {
+                    text: `${name} đã bắt đầu theo dõi bạn.`,
+                    icon: <UserPlus className="size-4 text-blue-500" />,
+                };
+            case "post_like":
+                return {
+                    text: `${name} đã thích bài viết của bạn.`,
+                    icon: <Heart className="size-4 text-rose-500 fill-rose-500" />,
+                };
+            case "post_comment":
+                return {
+                    text: `${name} đã bình luận về bài viết của bạn.`,
+                    icon: <MessageCircle className="size-4 text-emerald-500" />,
                 };
             default:
                 return {

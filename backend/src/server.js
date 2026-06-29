@@ -12,6 +12,8 @@ import messageRoute from "./routes/messageRoutes.js";
 import conversationRoute from "./routes/conversationRoutes.js";
 import storyRoute from "./routes/storyRoutes.js";
 import notificationRoute from "./routes/notificationRoutes.js";
+import postRoutes from "./routes/postRoutes.js";
+import socialRoutes from "./routes/socialRoute.js";
 import { protectedRoute } from "./middlewares/authMiddleware.js";
 
 import { app, server } from "./socket/index.js";
@@ -58,6 +60,8 @@ app.use("/api/message", messageRoute);
 app.use("/api/conversation", conversationRoute);
 app.use("/api/stories", storyRoute);
 app.use("/api/notifications", notificationRoute);
+app.use("/api/posts", postRoutes);
+app.use("/api/social", socialRoutes);
 
 /* ================= DB ================= */
 connectDB();
