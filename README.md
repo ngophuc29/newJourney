@@ -48,13 +48,29 @@
 - **Direct (1-on-1) messaging** with friends
 - **Group chat** with full group management
 - **Socket.IO** powered real-time delivery — no page refresh needed
-- **Media sharing** — send images and videos in conversations (via Cloudinary)
+- **Media sharing** — send images, videos, and files in conversations (via Cloudinary)
+- **🎙️ Audio Messages (Tin nhắn thoại)** — gửi và phát tin nhắn thoại trực tiếp bằng trình phát custom AudioPlayer
 - **Emoji reactions** — react to any message with any emoji
 - **Message revocation** — unsend your own messages; the message is cleared for all participants
 - **Infinite scroll / pagination** for message history (cursor-based)
 - **Unread message counters** per conversation
 - **Mark as seen** — conversations are marked read when opened
 - **Online presence indicators** — see which friends are currently online
+
+### 📸 Stories / Khoảnh khắc (Instagram-style)
+- **Đăng tải Khoảnh khắc**: Người dùng có thể đăng tải hình ảnh hoặc video ngắn làm Story
+- **Tự động biến mất**: Các Story tự động hết hạn và ẩn đi sau **24 giờ** nhờ vào chỉ mục TTL của MongoDB
+- **Story Tray**: Thanh trượt hiển thị danh sách bạn bè đang hoạt động có Story ở đầu trang nhắn tin
+- **Story Viewer**:
+  - Trình xem Story đẹp mắt với thanh tiến trình (progress bar) chạy tự động (5 giây/story)
+  - Hỗ trợ chuyển đổi Story nhanh (trước/sau) của cùng một người dùng hoặc giữa các bạn bè với nhau
+  - Tự động đánh dấu đã xem Story khi hiển thị
+  - Thống kê số lượng và danh sách người xem Story
+
+### 🔔 Real-time Notification Center / Trung tâm thông báo
+- **Chuông thông báo**: Nằm ở thanh tiêu đề (header) hiển thị số lượng thông báo chưa đọc theo thời gian thực
+- **Hỗ trợ các loại thông báo**: Yêu cầu kết bạn, lời mời vào nhóm, lượt nhắc tên (mention)
+- **Hành động nhanh**: Cho phép người dùng đánh dấu đã đọc, chấp nhận/từ chối kết bạn hoặc xóa thông báo trực tiếp từ menu thả xuống (dropdown) mà không cần chuyển trang
 
 ### 👥 Social / Friend System
 - **Send friend requests** with an optional message
@@ -70,6 +86,11 @@
 - **Transfer group ownership** to another member
 - **Leave group** (with optional owner handover)
 - System messages are emitted for membership events
+
+### 📱 Progressive Web App (PWA)
+- **Cài đặt ứng dụng**: Hỗ trợ cài đặt ứng dụng chat trực tiếp lên màn hình điện thoại hoặc máy tính (Desktop/Mobile)
+- **Giao diện di động**: Tối ưu hóa UI/UX cho màn hình cảm ứng, mang lại trải nghiệm mượt mà như app native
+- **Hiển thị thông báo cài đặt (PwaInstallPrompt)** khi truy cập bằng các trình duyệt hỗ trợ
 
 ### 🎨 UI / UX
 - Fully responsive layout
@@ -210,6 +231,8 @@ newJourney/
 │   │   │   ├── conversationController.js
 │   │   │   ├── friendController.js
 │   │   │   ├── messageController.js
+│   │   │   ├── notificationController.js
+│   │   │   ├── storyController.js
 │   │   │   └── userController.js
 │   │   ├── middlewares/          # Express middleware
 │   │   │   ├── authMiddleware.js      # JWT verification
@@ -222,12 +245,16 @@ newJourney/
 │   │   │   ├── Friend.js
 │   │   │   ├── FriendRequest.js
 │   │   │   ├── Conversation.js
-│   │   │   └── Message.js
+│   │   │   ├── Message.js
+│   │   │   ├── Notification.js
+│   │   │   └── Story.js
 │   │   ├── routes/               # Express route definitions
 │   │   │   ├── authRoutes.js
 │   │   │   ├── conversationRoutes.js
 │   │   │   ├── friendRoute.js
 │   │   │   ├── messageRoutes.js
+│   │   │   ├── notificationRoutes.js
+│   │   │   ├── storyRoutes.js
 │   │   │   └── userRoutes.js
 │   │   ├── socket/
 │   │   │   └── index.js          # Socket.IO server setup & events
@@ -249,7 +276,7 @@ newJourney/
     │   │   │   ├── signup-form.tsx    # Register form with Zod validation
     │   │   │   ├── ProtectedRoute.tsx # Guards authenticated pages
     │   │   │   └── Logout.tsx
-    │   │   ├── chat/                  # Chat UI components
+    │   │   ├── chat/                  # Chat UI components (AudioPlayer, etc.)
     │   │   ├── sidebar/               # Sidebar navigation
     │   │   ├── profile/               # User profile components
     │   │   ├── friends/               # Friend list components
@@ -257,7 +284,9 @@ newJourney/
     │   │   ├── AddFriendModel/        # Add friend modal
     │   │   ├── createNewChat/         # New chat/group modal
     │   │   ├── newGroupChat/          # Group chat creation
-    │   │   └── ui/                    # shadcn/ui base components
+    │   │   ├── story/                 # Instagram-like Story components (StoryTray, StoryViewer)
+    │   │   ├── notification/          # NotificationBell component
+    │   │   └── ui/                    # shadcn/ui base components + PwaInstallPrompt.tsx
     │   ├── hooks/                     # Custom React hooks
     │   ├── lib/
     │   │   ├── axios.ts               # Axios instance + interceptors
@@ -273,6 +302,8 @@ newJourney/
     │   │   ├── useAuthStore.ts
     │   │   ├── useChatStore.ts
     │   │   ├── useFriendStore.ts
+    │   │   ├── useNotificationStore.ts
+    │   │   ├── useStoryStore.ts
     │   │   ├── useSocketStore.ts
     │   │   ├── useThemeStore.ts
     │   │   └── useUserStore.ts
@@ -397,6 +428,26 @@ newJourney/
 
 ---
 
+### 🔔 Notifications — `/api/notifications`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/` | Lấy tất cả thông báo của người dùng hiện tại |
+| `PATCH` | `/:notificationId/read` | Đánh dấu thông báo là đã đọc |
+| `DELETE` | `/:notificationId` | Xóa thông báo |
+
+---
+
+### 📸 Stories — `/api/stories`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/` | Tải lên Story mới (hỗ trợ tải lên hình ảnh/video bằng `multipart/form-data`) |
+| `GET` | `/` | Lấy danh sách Story của bản thân và bạn bè (hoạt động trong vòng 24 giờ) |
+| `PATCH` | `/:storyId/view` | Đánh dấu đã xem Story |
+
+---
+
 ## 🔌 Socket.IO Events
 
 ### Client → Server (Emit)
@@ -472,14 +523,35 @@ newJourney/
 | `senderId` | ObjectId (ref: User) | |
 | `content` | String | Trimmed |
 | `mediaUrl` | String | Cloudinary URL |
-| `mediaType` | String | `"image"` \| `"video"` |
+| `mediaType` | String | `"image"` \| `"video"` \| `"file"` \| `"audio"` |
 | `mediaPublicId` | String | Cloudinary public ID |
+| `fileName` | String | Tên tệp đính kèm |
+| `fileSize` | Number | Dung lượng tệp đính kèm |
+| `duration` | Number | Thời lượng tin nhắn thoại (giây) |
 | `type` | String | `"user"` \| `"system"` |
 | `reactions` | Array | `[{ userId, emoji }]` |
 | `isRevoked` | Boolean | Default: `false` |
 | `revokedAt` | Date | Set when message is revoked |
 
 *Compound index on `{ conversationId, createdAt: -1 }` for efficient cursor-based pagination.*
+
+### Notification
+| Field | Type | Notes |
+|-------|------|-------|
+| `userId` | ObjectId (ref: User) | Người nhận thông báo (được đánh chỉ mục) |
+| `type` | String | `"friend_request"` \| `"mention"` \| `"group_invite"` |
+| `senderId` | ObjectId (ref: User) | Người gửi hành động |
+| `relatedId` | ObjectId | ID liên kết (Tin nhắn hoặc Cuộc trò chuyện) |
+| `isRead` | Boolean | Trạng thái đã đọc (Mặc định: `false`) |
+
+### Story
+| Field | Type | Notes |
+|-------|------|-------|
+| `userId` | ObjectId (ref: User) | Người đăng Story |
+| `mediaUrl` | String | Đường dẫn tệp tin trên Cloudinary |
+| `mediaType` | String | `"image"` \| `"video"` |
+| `viewers` | Array of ObjectIds (ref: User) | Danh sách người đã xem |
+| `createdAt` | Date | Thời gian tạo (Có TTL index tự động xóa sau **24 giờ**) |
 
 ---
 
@@ -621,6 +693,8 @@ The app uses **Zustand** with selective persistence via `localStorage`:
 | `useAuthStore` | `user` only | Auth state, token management, sign-in/out actions |
 | `useChatStore` | `conversations` only | Conversation list, messages, real-time updates |
 | `useFriendStore` | ❌ | Friends, requests, suggestions |
+| `useNotificationStore` | ❌ | Real-time notifications, unread count, read actions |
+| `useStoryStore` | ❌ | Instagram-like stories, active viewer state, uploads |
 | `useSocketStore` | ❌ | Socket.IO connection lifecycle |
 | `useThemeStore` | `isDark` | Dark/Light mode preference |
 | `useUserStore` | ❌ | Profile update actions |
