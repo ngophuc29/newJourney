@@ -54,6 +54,8 @@ export interface Conversation {
   pinnedMessages?: PinnedMessage[];
   createdAt: string;
   updatedAt: string;
+  partnerBlockedUs?: boolean;
+  weBlockedPartner?: boolean;
 }
 
 export interface ConversationResponse {

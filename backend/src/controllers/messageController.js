@@ -72,11 +72,34 @@ export const sendDirectMessage = async (req,res) => {
     
     try {
         // lay nguoi nhan ,noi dung tin nhan , id cua doan hoi thoai
-        const { recipientId, content, conversationId, replyTo, mentions: mentionedIds, duration } = req.body
+        const { recipientId, content, conversationId, replyTo, mentions: mentionedIds, duration, mediaUrl, mediaType } = req.body
         const senderId = req.user._id
         const trimmedContent = content?.trim() ?? ""
-        const media = await getUploadedMedia(req.file)
+        let media = await getUploadedMedia(req.file)
         
+        if (!req.file && mediaUrl && mediaType) {
+            media = {
+                mediaUrl,
+                mediaType,
+                imageUrl: mediaType === "image" ? mediaUrl : undefined
+            };
+        }
+        
+
+        // Check if blocked
+        const [senderUser, recipientUser] = await Promise.all([
+            User.findById(senderId),
+            User.findById(recipientId)
+        ]);
+
+        if (recipientUser) {
+            if (senderUser.blockedUsers?.map(id => id.toString()).includes(recipientId.toString())) {
+                return res.status(403).json({ message: "Bạn đã chặn người dùng này" });
+            }
+            if (recipientUser.blockedUsers?.map(id => id.toString()).includes(senderId.toString())) {
+                return res.status(403).json({ message: "Người dùng này đã chặn bạn" });
+            }
+        }
 
         let conversation;
 
@@ -143,7 +166,7 @@ export const sendDirectMessage = async (req,res) => {
                     userId: mentionUserId,
                     type: "mention",
                     senderId,
-                    relatedId: message._id
+                    relatedId: message.conversationId
                 });
                 const populatedNotif = await notif.populate("senderId", "displayName avatarURL username");
                 io.to(mentionUserId.toString()).emit("new-notification", { notification: populatedNotif });
@@ -184,11 +207,19 @@ export const sendDirectMessage = async (req,res) => {
 
 export const sendGroupMessage = async (req, res) => {
     try {
-        const { conversationId, content, replyTo, mentions: mentionedIds, duration } = req.body
+        const { conversationId, content, replyTo, mentions: mentionedIds, duration, mediaUrl, mediaType } = req.body
         const senderId = req.user._id
         const conversation = req.conversation
         const trimmedContent = content?.trim() ?? ""
-        const media = await getUploadedMedia(req.file)
+        let media = await getUploadedMedia(req.file)
+
+        if (!req.file && mediaUrl && mediaType) {
+            media = {
+                mediaUrl,
+                mediaType,
+                imageUrl: mediaType === "image" ? mediaUrl : undefined
+            };
+        }
 
         if (!trimmedContent && !media.mediaUrl) {
             return res.status(400).json({message:"thieu noi dung"})
@@ -228,7 +259,7 @@ export const sendGroupMessage = async (req, res) => {
                     userId: mentionUserId,
                     type: "mention",
                     senderId,
-                    relatedId: message._id
+                    relatedId: message.conversationId
                 });
                 const populatedNotif = await notif.populate("senderId", "displayName avatarURL username");
                 io.to(mentionUserId.toString()).emit("new-notification", { notification: populatedNotif });

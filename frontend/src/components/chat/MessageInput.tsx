@@ -12,6 +12,7 @@ import ReplyPreview from "./ReplyPreview";
 import MentionDropdown from "./MentionDropdown";
 import FilePreviewCard from "./FilePreviewCard";
 import api from "@/lib/axios";
+import GifPicker from "./GifPicker";
 
 const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const { user } = useAuthStore();
@@ -37,6 +38,11 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Voice Preview State
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+  const [audioPreviewBlob, setAudioPreviewBlob] = useState<Blob | null>(null);
+  const [audioPreviewDuration, setAudioPreviewDuration] = useState(0);
 
   const {
     sendDirectMessage,
@@ -161,7 +167,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
     }
   };
 
-  const stopAndSendRecording = async () => {
+  const stopRecordingAndPreview = async () => {
     if (!mediaRecorderRef.current || !isRecording) return;
 
     if (recordingIntervalRef.current) {
@@ -172,39 +178,78 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
 
     mediaRecorderRef.current.onstop = async () => {
       const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-      const audioFile = new File([audioBlob], "voice_message.webm", { type: "audio/webm" });
-
-      setSending(true);
-      try {
-        if (selectedConvo.type === "direct") {
-          const otherUser = selectedConvo.participants.find((p) => p._id !== user._id);
-          if (!otherUser) return;
-          
-          const formData = new FormData();
-          formData.append("recipientId", otherUser._id);
-          formData.append("file", audioFile);
-          formData.append("duration", duration.toString());
-          if (selectedConvo._id) formData.append("conversationId", selectedConvo._id);
-
-          await api.post("/message/direct", formData);
-        } else {
-          const formData = new FormData();
-          formData.append("conversationId", selectedConvo._id);
-          formData.append("file", audioFile);
-          formData.append("duration", duration.toString());
-
-          await api.post("/message/group", formData);
-        }
-      } catch (error) {
-        console.error("Lỗi khi gửi tin nhắn thoại:", error);
-        toast.error("Không thể gửi tin nhắn thoại");
-      } finally {
-        setSending(false);
-        setIsRecording(false);
-      }
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setAudioPreviewUrl(audioUrl);
+      setAudioPreviewBlob(audioBlob);
+      setAudioPreviewDuration(duration);
     };
 
     mediaRecorderRef.current.stop();
+    setIsRecording(false);
+  };
+
+  const sendVoiceMessage = async () => {
+    if (!audioPreviewBlob || !audioPreviewDuration) return;
+
+    const audioFile = new File([audioPreviewBlob], "voice_message.webm", { type: "audio/webm" });
+    setSending(true);
+    try {
+      if (selectedConvo.type === "direct") {
+        const otherUser = selectedConvo.participants.find((p) => p._id !== user?._id);
+        if (!otherUser) return;
+        
+        const formData = new FormData();
+        formData.append("recipientId", otherUser._id);
+        formData.append("file", audioFile);
+        formData.append("duration", audioPreviewDuration.toString());
+        if (selectedConvo._id) formData.append("conversationId", selectedConvo._id);
+
+        await api.post("/message/direct", formData);
+      } else {
+        const formData = new FormData();
+        formData.append("conversationId", selectedConvo._id);
+        formData.append("file", audioFile);
+        formData.append("duration", audioPreviewDuration.toString());
+
+        await api.post("/message/group", formData);
+      }
+      toast.success("Đã gửi tin nhắn thoại");
+      clearAudioPreview();
+    } catch (error) {
+      console.error("Lỗi khi gửi tin nhắn thoại:", error);
+      toast.error("Không thể gửi tin nhắn thoại");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const clearAudioPreview = () => {
+    if (audioPreviewUrl) {
+      URL.revokeObjectURL(audioPreviewUrl);
+    }
+    setAudioPreviewUrl(null);
+    setAudioPreviewBlob(null);
+    setAudioPreviewDuration(0);
+    audioChunksRef.current = [];
+  };
+
+  const handleSelectGif = async (gifUrl: string) => {
+    setSending(true);
+    try {
+      if (selectedConvo.type === "direct") {
+        const otherUser = selectedConvo.participants.find((p) => p._id !== user?._id);
+        if (!otherUser) return;
+        await sendDirectMessage(otherUser._id, "", undefined, [], gifUrl, "image");
+      } else {
+        await sendGroupMessage(selectedConvo._id, "", undefined, [], gifUrl, "image");
+      }
+      toast.success("Đã gửi GIF");
+    } catch (error) {
+      console.error("Lỗi khi gửi GIF:", error);
+      toast.error("Không thể gửi GIF");
+    } finally {
+      setSending(false);
+    }
   };
 
   const cancelRecording = () => {
@@ -354,6 +399,59 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   const isVideo = mediaFile?.type.startsWith("video/");
   const mediaLabel = isImage ? "anh" : isVideo ? "video" : "file";
 
+  const partner = selectedConvo.type === "direct" 
+    ? selectedConvo.participants.find((p) => p._id !== user?._id) 
+    : null;
+  const partnerName = partner?.displayName || "người dùng này";
+
+  if (selectedConvo.type === "direct" && selectedConvo.partnerBlockedUs) {
+    return (
+      <div className="p-4 text-center bg-background border-t border-border/40">
+        <div className="py-3 px-4 text-sm font-semibold text-destructive bg-destructive/10 rounded-2xl border border-dashed border-destructive/30">
+          Bạn đã bị {partnerName} chặn
+        </div>
+      </div>
+    );
+  }
+
+  const isBlockedByUs = user?.blockedUsers?.map((id: any) => 
+    typeof id === "object" ? id._id || id.toString() : id.toString()
+  ).includes(partner?._id);
+
+  const handleUnblock = async () => {
+    if (!partner?._id) return;
+    try {
+      await api.post(`/users/unblock/${partner._id}`);
+      toast.success(`Đã bỏ chặn ${partnerName}`);
+      if (user) {
+        const updatedBlocked = (user.blockedUsers || []).filter(
+          (id: any) => (typeof id === "object" ? id._id !== partner._id : id !== partner._id)
+        );
+        useAuthStore.getState().setUser({ ...user, blockedUsers: updatedBlocked });
+      }
+    } catch (error) {
+      console.error("Lỗi khi bỏ chặn:", error);
+      toast.error("Không thể bỏ chặn");
+    }
+  };
+
+  if (selectedConvo.type === "direct" && (selectedConvo.weBlockedPartner || isBlockedByUs)) {
+    return (
+      <div className="p-4 text-center bg-background border-t border-border/40">
+        <div className="py-3 px-4 text-sm font-semibold text-muted-foreground bg-muted/30 rounded-2xl border border-dashed border-border/50 flex flex-col sm:flex-row items-center justify-center gap-2">
+          <span>Bạn đã chặn {partnerName}.</span>
+          <Button 
+            variant="link" 
+            onClick={handleUnblock}
+            className="text-primary hover:text-primary-hover p-0 h-auto font-bold underline cursor-pointer"
+          >
+            Bỏ chặn
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col bg-background">
       {/* Reply Preview */}
@@ -452,7 +550,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
                 variant="ghost"
                 size="icon"
                 className="hover:bg-gradient/10 transition-smooth text-muted-foreground"
-                disabled={sending}
+                disabled={sending || !!audioPreviewUrl}
                 onClick={startRecording}
               >
                 <Mic className="size-5" />
@@ -479,7 +577,34 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
                 </Button>
                 <Button
                   type="button"
-                  onClick={stopAndSendRecording}
+                  onClick={stopRecordingAndPreview}
+                  disabled={sending}
+                  className="bg-primary hover:bg-primary-hover text-white rounded-full size-8 p-0 flex items-center justify-center shadow-md"
+                >
+                  <Send className="size-3.5 fill-current ml-0.5" />
+                </Button>
+              </div>
+            </div>
+          ) : audioPreviewUrl ? (
+            <div className="flex flex-1 items-center justify-between bg-muted/60 rounded-full px-4 py-2 animate-in slide-in-from-bottom-2 duration-200">
+              <div className="flex items-center gap-3 flex-1">
+                <span className="text-xs font-semibold text-primary shrink-0">Nghe lại:</span>
+                <audio src={audioPreviewUrl} controls className="h-8 max-w-full flex-1 max-h-8 scale-95 origin-left" />
+                <span className="text-xs font-mono text-muted-foreground shrink-0">{formatRecordingTime(audioPreviewDuration)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={clearAudioPreview}
+                  className="text-muted-foreground hover:text-destructive rounded-full"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  onClick={sendVoiceMessage}
                   disabled={sending}
                   className="bg-primary hover:bg-primary-hover text-white rounded-full size-8 p-0 flex items-center justify-center shadow-md"
                 >
@@ -496,19 +621,22 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
                 onChange={handleInputChange}
                 disabled={sending}
                 placeholder={editingMessage ? "Chỉnh sửa tin nhắn..." : "Soan tin nhan"}
-                className="resize-none border-border/50 bg-white pr-20 transition-smooth focus:border-primary/50"
+                className="resize-none border-border/50 bg-white pr-24 transition-smooth focus:border-primary/50"
               />
               <div className="absolute right-2 top-1/2 flex -translate-y-1/2 transform items-center gap-1">
                 {!editingMessage && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={sending}
-                    onClick={() => setOpen(!open)}
-                  >
-                    :)
-                  </Button>
+                  <>
+                    <GifPicker onSelect={handleSelectGif} />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={sending}
+                      onClick={() => setOpen(!open)}
+                    >
+                      :)
+                    </Button>
+                  </>
                 )}
 
                 {open && !editingMessage && (

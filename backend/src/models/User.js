@@ -39,6 +39,18 @@ const userScherma = new mongoose.Schema({
     phone: {
         type: String,
         sparse : true // cho phép null nhưng k dc trùng
+    },
+    blockedUsers: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
     }
 }, {
     timestamps: true 

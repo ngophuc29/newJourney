@@ -27,6 +27,9 @@ import { useState } from "react"
 import FriendRequestDialog from "../friendRequest/FriendRequestDialog"
 import ProfileDialog from "../profile/ProfileDialog"
 import MyFriendsDialog from "../friends/MyFriendsDialog"
+import NotificationDialog from "../notification/NotificationDialog"
+import { useNotificationStore } from "@/stores/useNotificationStore"
+import { useEffect } from "react"
 
 export function NavUser({
   user,
@@ -37,6 +40,14 @@ export function NavUser({
   const [friendRequestOpen, setfriendRequestOpen] = useState(false);
   const [profileOpen, setprofileOpen] = useState(false);
   const [myFriendsOpen, setMyFriendsOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  
+  const { notifications, fetchNotifications } = useNotificationStore();
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
   return (
 
     <>
@@ -95,12 +106,19 @@ export function NavUser({
                   <UsersIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
                   Ban be cua toi
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setfriendRequestOpen(true)}
+                 <DropdownMenuItem
+                  onClick={() => setNotificationOpen(true)}
+                  className="justify-between"
                 >
-                  <BellIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground"
-                  />
-                  Thong bao
+                  <span className="flex items-center gap-2">
+                    <BellIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
+                    Thông báo
+                  </span>
+                  {unreadCount > 0 && (
+                    <span className="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+                      {unreadCount}
+                    </span>
+                  )}
                 </DropdownMenuItem>
 
               </DropdownMenuGroup>
@@ -130,6 +148,11 @@ export function NavUser({
       <MyFriendsDialog
         open={myFriendsOpen}
         setOpen={setMyFriendsOpen}
+      />
+
+      <NotificationDialog
+        open={notificationOpen}
+        setOpen={setNotificationOpen}
       />
 
 

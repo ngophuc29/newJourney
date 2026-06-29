@@ -118,7 +118,7 @@ export const createConversation = async (req, res) => {
             return res.status(400).json({ message: "Conversation type k hop le" })
         }
         await conversation.populate([
-            { path: 'participant.userId', select: "displayName avatarURL" },
+            { path: 'participant.userId', select: "displayName avatarURL blockedUsers" },
             { path: "seenBy", select: 'displayName avatarURL' }, {
                 path: 'lastMessage.senderId', select: "displayName avatarURL"
             }
@@ -129,7 +129,26 @@ export const createConversation = async (req, res) => {
             avatarURL: p.userId?.avatarURL ?? null,
             joinedAt: p.joinedAt,
         }));
-        const formatted = { ...conversation.toObject(), participants };
+
+        let partnerBlockedUs = false;
+        let weBlockedPartner = false;
+        if (type === "direct") {
+            const partner = conversation.participant.find(p => p.userId?._id.toString() !== userId.toString())?.userId;
+            const me = conversation.participant.find(p => p.userId?._id.toString() === userId.toString())?.userId;
+            if (partner && partner.blockedUsers) {
+                partnerBlockedUs = partner.blockedUsers.map(id => id.toString()).includes(userId.toString());
+            }
+            if (me && me.blockedUsers) {
+                weBlockedPartner = me.blockedUsers.map(id => id.toString()).includes(partner?._id.toString());
+            }
+        }
+
+        const formatted = { 
+            ...conversation.toObject(), 
+            participants,
+            partnerBlockedUs,
+            weBlockedPartner
+        };
 
         if (type === 'group') {
             memberIds.forEach((userId) => {
@@ -152,7 +171,7 @@ export const getConversation = async (req, res) => {
             'participant.userId': userId
         }).sort({ lastMessageAt: -1, updatedAt: -1 })
             .populate([{
-                path: 'participant.userId', select: "displayName avatarURL"
+                path: 'participant.userId', select: "displayName avatarURL blockedUsers"
             }, {
                 path: 'lastMessage.senderId', select: "displayName avatarURL"
 
@@ -170,10 +189,25 @@ export const getConversation = async (req, res) => {
                 joinedAt: p.joinedAt
             }))
 
+            let partnerBlockedUs = false;
+            let weBlockedPartner = false;
+            if (convo.type === "direct") {
+                const partner = convo.participant.find(p => p.userId?._id.toString() !== userId.toString())?.userId;
+                const me = convo.participant.find(p => p.userId?._id.toString() === userId.toString())?.userId;
+                if (partner && partner.blockedUsers) {
+                    partnerBlockedUs = partner.blockedUsers.map(id => id.toString()).includes(userId.toString());
+                }
+                if (me && me.blockedUsers) {
+                    weBlockedPartner = me.blockedUsers.map(id => id.toString()).includes(partner?._id.toString());
+                }
+            }
+
             return {
                 ...convo.toObject(),//chuyen mongoodocs thanh js
                 unreadCounts: convo.unreadCounts || {},
-                participants
+                participants,
+                partnerBlockedUs,
+                weBlockedPartner
             }
         })
         return res.status(200).json({ conversation: formatted })

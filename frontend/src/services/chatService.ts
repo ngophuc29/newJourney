@@ -26,7 +26,16 @@ export const chatService = {
     return { messages: res.data.messages, cursor: res.data.nextCursor }
 
   },
-  async sendDirectMessage(recipientId: string, content: string = "", mediaFile?: File, conversationId?: string, replyTo?: string, mentions?: string[]) {
+  async sendDirectMessage(
+    recipientId: string,
+    content: string = "",
+    mediaFile?: File,
+    conversationId?: string,
+    replyTo?: string,
+    mentions?: string[],
+    mediaUrl?: string,
+    mediaType?: string
+  ) {
     if (mediaFile) {
       const formData = new FormData();
       formData.append("recipientId", recipientId);
@@ -41,11 +50,19 @@ export const chatService = {
     }
 
     const res = await api.post('/message/direct', {
-      recipientId, content, conversationId, replyTo, mentions
+      recipientId, content, conversationId, replyTo, mentions, mediaUrl, mediaType
     })
     return res.data.message
   },
-  async sendGroupMessage(conversationId?: string, content: string = "", mediaFile?: File, replyTo?: string, mentions?: string[]) {
+  async sendGroupMessage(
+    conversationId?: string,
+    content: string = "",
+    mediaFile?: File,
+    replyTo?: string,
+    mentions?: string[],
+    mediaUrl?: string,
+    mediaType?: string
+  ) {
     if (mediaFile) {
       const formData = new FormData();
       if (conversationId) formData.append("conversationId", conversationId);
@@ -59,11 +76,12 @@ export const chatService = {
     }
 
     const res = await api.post("/message/group", {
-
       conversationId,
       content,
       replyTo,
-      mentions
+      mentions,
+      mediaUrl,
+      mediaType
     });
     return res.data.message;
   },

@@ -101,6 +101,8 @@ export const useChatStore = create<ChatState>()(
         content,
         mediaFile,
         mentions,
+        mediaUrl,
+        mediaType,
       ) => {
         try {
           const { activeConversationId, replyingTo } = get();
@@ -112,6 +114,8 @@ export const useChatStore = create<ChatState>()(
             activeConversationId || undefined,
             replyingTo?._id || undefined,
             mentions,
+            mediaUrl,
+            mediaType,
           );
 
           set((state) => ({
@@ -124,7 +128,7 @@ export const useChatStore = create<ChatState>()(
           console.log("Loi xay ra khi gui tin nhan truc tiep", error);
         }
       },
-      sendGroupMessage: async (conversationId, content, mediaFile, mentions) => {
+      sendGroupMessage: async (conversationId, content, mediaFile, mentions, mediaUrl, mediaType) => {
         try {
           const { replyingTo } = get();
 
@@ -134,6 +138,8 @@ export const useChatStore = create<ChatState>()(
             mediaFile,
             replyingTo?._id || undefined,
             mentions,
+            mediaUrl,
+            mediaType,
           );
 
           set((state) => ({
@@ -143,7 +149,7 @@ export const useChatStore = create<ChatState>()(
             ),
           }));
         } catch (error) {
-          console.log("Loi xay ra khi gui tin nhan nhom ", error);
+          console.log("Loi xay ra khi gui tin nhan nhom", error);
         }
       },
       addMessage: async (message) => {

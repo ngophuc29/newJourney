@@ -89,10 +89,15 @@ export function SigninForm({
               {/* password */}
               <div className="flex flex-col gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="password"
-                    className="text-sm block">
-                    Mật khẩu
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password"
+                      className="text-sm block">
+                      Mật khẩu
+                    </Label>
+                    <a href="/forgot-password" className="text-sm underline underline-offset-4 hover:text-primary">
+                      Quên mật khẩu?
+                    </a>
+                  </div>
 
                   <Input
                     type="password"

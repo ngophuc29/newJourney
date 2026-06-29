@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt"
 import User from "../models/User.js"
-
 import jwt from "jsonwebtoken"
 import Session from "../models/Session.js"
 import crypto from "crypto"
+import { sendEmail } from "../utils/emailHelper.js"
 
 const ACCESS_TOKEN_TTL = '30m'
 const REFESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000 // 14 ngayf
@@ -42,10 +42,16 @@ export const signUp = async (req, res) => {
         }
 
         // kiểm tra user đã tồn tại chưa
-        const duplicate = await User.findOne({ username })
+        const [duplicate, emailDuplicate] = await Promise.all([
+            User.findOne({ username }),
+            User.findOne({ email })
+        ])
 
         if (duplicate) {
             return res.status(409).json({ message: "Username đã tồn tại" })
+        }
+        if (emailDuplicate) {
+            return res.status(409).json({ message: "Email đã được sử dụng" })
         }
         // mã hóa pasword
         const hashedPassword = await bcrypt.hash(password, 10) // salt =10
@@ -183,3 +189,83 @@ export const refreshToken = async (req, res) => {
         return res.status(500).json({ message: "loi he thong" })
     }
 }
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Vui lòng cung cấp email" });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "Không tìm thấy người dùng với email này" });
+        }
+
+        // Tạo reset token
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        
+        // Lưu token và thời gian hết hạn (1 giờ) vào DB
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+
+        // Tạo link reset
+        const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+        const resetUrl = `${clientUrl}/reset-password?token=${resetToken}`;
+
+        const html = `
+            <h3>Yêu cầu đặt lại mật khẩu</h3>
+            <p>Bạn nhận được email này vì đã yêu cầu đặt lại mật khẩu cho tài khoản NewJourney của mình.</p>
+            <p>Vui lòng click vào link bên dưới để đặt lại mật khẩu (link có hiệu lực trong 1 giờ):</p>
+            <a href="${resetUrl}" target="_blank" style="padding: 10px 20px; background-color: #7c3aed; color: white; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">Đặt lại mật khẩu</a>
+            <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này.</p>
+        `;
+
+        await sendEmail({
+            to: user.email,
+            subject: "[NewJourney] Yêu cầu đặt lại mật khẩu",
+            html
+        });
+
+        return res.status(200).json({ message: "Link đặt lại mật khẩu đã được gửi qua email của bạn" });
+    } catch (error) {
+        console.error("Lỗi khi gọi forgotPassword:", error);
+        return res.status(500).json({ message: "Lỗi hệ thống" });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, password } = req.body;
+
+        if (!token || !password) {
+            return res.status(400).json({ message: "Thiếu thông tin đặt lại mật khẩu" });
+        }
+
+        if (password.length < 8) {
+            return res.status(400).json({ message: "Mật khẩu mới phải có ít nhất 8 ký tự" });
+        }
+
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+        }
+
+        // Cập nhật mật khẩu mới
+        user.hashedPassword = await bcrypt.hash(password, 10);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        return res.status(200).json({ message: "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới." });
+    } catch (error) {
+        console.error("Lỗi khi gọi resetPassword:", error);
+        return res.status(500).json({ message: "Lỗi hệ thống" });
+    }
+};

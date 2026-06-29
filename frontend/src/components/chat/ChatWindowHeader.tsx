@@ -13,6 +13,7 @@ import { Button } from '../ui/button'
 import { Settings, Search, Image } from 'lucide-react'
 import GroupSettingsDialog from './GroupSettingsDialog'
 import SearchMessagesDialog from './SearchMessagesDialog'
+import UserCardDialog from './UserCardDialog'
 
 const ChatWindowHeader = ({ chat, onToggleMedia }: { chat?: Conversation; onToggleMedia?: () => void }) => {
     
@@ -21,6 +22,7 @@ const ChatWindowHeader = ({ chat, onToggleMedia }: { chat?: Conversation; onTogg
     const { user } = useAuthStore();
     const [groupSettingsOpen, setGroupSettingsOpen] = useState(false)
     const [searchOpen, setSearchOpen] = useState(false)
+    const [userCardOpen, setUserCardOpen] = useState(false)
 
     chat = chat ?? conversations.find((c) => c._id === activeConversationId)
     let otherUser;
@@ -52,11 +54,16 @@ const ChatWindowHeader = ({ chat, onToggleMedia }: { chat?: Conversation; onTogg
                   <div className="relative">
                       {chat.type === "direct" ? (
                           <>
-                              <UserAvatar
-                                  type={"sidebar"}
-                                  name={otherUser?.displayName || "Moji"}
-                                  avatarURL={otherUser?.avatarURL || undefined}
-                              />
+                              <div 
+                                  className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                  onClick={() => setUserCardOpen(true)}
+                              >
+                                  <UserAvatar
+                                      type={"sidebar"}
+                                      name={otherUser?.displayName || "Moji"}
+                                      avatarURL={otherUser?.avatarURL || undefined}
+                                  />
+                              </div>
                               {/* todo: socket io */}
                               <StatusBadge
                                   status={
@@ -126,6 +133,13 @@ const ChatWindowHeader = ({ chat, onToggleMedia }: { chat?: Conversation; onTogg
                   )}
               </div>
           </div>
+          {chat.type === "direct" && otherUser && (
+              <UserCardDialog
+                  userId={otherUser._id}
+                  open={userCardOpen}
+                  onOpenChange={setUserCardOpen}
+              />
+          )}
       </header>
   )
 }

@@ -66,12 +66,16 @@ export interface ChatState {
     content: string,
     mediaFile?: File,
     mentions?: string[],
+    mediaUrl?: string,
+    mediaType?: string,
   ) => Promise<void>;
   sendGroupMessage: (
     conversationId: string,
     content: string,
     mediaFile?: File,
     mentions?: string[],
+    mediaUrl?: string,
+    mediaType?: string,
   ) => Promise<void>;
   // add message
   addMessage: (message: Message) => Promise<void>;

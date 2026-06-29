@@ -71,6 +71,7 @@ const StoryTray = () => {
                 type="chat"
                 name={user.displayName}
                 avatarURL={user.avatarURL ?? undefined}
+                className="!size-full"
               />
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
@@ -133,6 +134,7 @@ const StoryTray = () => {
                   type="chat"
                   name={us.user.displayName}
                   avatarURL={us.user.avatarURL ?? undefined}
+                  className="!size-full"
                 />
               </div>
             </div>

@@ -12,6 +12,7 @@ import ForwardMessagesDialog from "./ForwardMessagesDialog";
 import FilePreviewCard from "./FilePreviewCard";
 import ReadReceiptsDialog from "./ReadReceiptsDialog";
 import AudioPlayer from "./AudioPlayer";
+import UserCardDialog from "./UserCardDialog";
 
 interface MessageItemProps {
     message: Message;
@@ -31,6 +32,8 @@ const MessageItem = ({
     const [reactionOpen, setReactionOpen] = useState(false);
     const [forwardOpen, setForwardOpen] = useState(false);
     const [receiptsOpen, setReceiptsOpen] = useState(false);
+    const [userCardOpen, setUserCardOpen] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const { revokeMessage, toggleMessageReaction, setReplyingTo, setEditingMessage, pinMessage } = useChatStore();
     const { user } = useAuthStore();
     const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
@@ -197,11 +200,19 @@ const MessageItem = ({
                 {!message.isOwn && (
                     <div className="w-8">
                         {isGroupBreak && (
-                            <UserAvatar
-                                type="chat"
-                                name={participant?.displayName ?? "Moji"}
-                                avatarURL={participant?.avatarURL ?? undefined}
-                            />
+                            <div 
+                                className="cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                                onClick={() => {
+                                    setSelectedUserId(message.senderId);
+                                    setUserCardOpen(true);
+                                }}
+                            >
+                                <UserAvatar
+                                    type="chat"
+                                    name={participant?.displayName ?? "Moji"}
+                                    avatarURL={participant?.avatarURL ?? undefined}
+                                />
+                            </div>
                         )}
                     </div>
                 )}
@@ -539,6 +550,11 @@ const MessageItem = ({
                     messageId={message._id}
                 />
             )}
+            <UserCardDialog
+                userId={selectedUserId}
+                open={userCardOpen}
+                onOpenChange={setUserCardOpen}
+            />
         </>
     );
 };

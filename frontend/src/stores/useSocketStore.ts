@@ -319,6 +319,14 @@ export const useSocketStore = create<SocketState>((set, get) => ({
     socket.on("new-notification", ({ notification }) => {
       useNotificationStore.getState().addNotification(notification);
     });
+
+    socket.on("user-blocked", () => {
+      useChatStore.getState().fetchConversation();
+    });
+
+    socket.on("user-unblocked", () => {
+      useChatStore.getState().fetchConversation();
+    });
   },
 
   disconnectSocket: () => {

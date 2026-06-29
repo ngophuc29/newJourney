@@ -2,6 +2,8 @@ import { BrowserRouter,Routes,Route } from "react-router-dom"
 import SignInpage from "./pages/SignInpage"
 import SignUpPage from "./pages/SignUpPage"
 import ChatApp from "./pages/ChatApp"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
 import { Toaster }from 'sonner'
 import ProtectedRoute from "./components/auth/ProtectedRoute"
 import { useThemeStore } from "./stores/useThemeStore"
@@ -195,6 +197,8 @@ function App() {
           {/* public route */}
           <Route element={<SignInpage />} path="/signin" />
           <Route element={<SignUpPage />} path="/signup" />
+          <Route element={<ForgotPasswordPage />} path="/forgot-password" />
+          <Route element={<ResetPasswordPage />} path="/reset-password" />
           {/* protected route */}
           <Route path="/" element={<ProtectedRoute/>}>
             <Route index element={<ChatApp/>} />
