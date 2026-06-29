@@ -81,11 +81,9 @@ const {convoLoading} =useChatStore()
         <SidebarGroup className="pb-0">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link to="/">
-                  <Home className="size-4 text-primary" />
-                  <span className="font-bold text-primary">Quay lại Bảng tin</span>
-                </Link>
+              <SidebarMenuButton render={<Link to="/" />}>
+                <Home className="size-4 text-primary" />
+                <span className="font-bold text-primary">Quay lại Bảng tin</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

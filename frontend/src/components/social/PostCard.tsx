@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
 import { 
     DropdownMenu, 
     DropdownMenuContent, 
@@ -205,10 +204,12 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
 
                 {/* More Options / Delete */}
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button className="p-2 rounded-full hover:bg-accent/50 text-muted-foreground transition-colors">
-                            <MoreHorizontal className="size-5" />
-                        </button>
+                    <DropdownMenuTrigger
+                        render={
+                            <button className="p-2 rounded-full hover:bg-accent/50 text-muted-foreground transition-colors" />
+                        }
+                    >
+                        <MoreHorizontal className="size-5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="bg-card border border-border/40 text-foreground">
                         {user?._id === post.userId._id ? (

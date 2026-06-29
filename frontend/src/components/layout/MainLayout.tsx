@@ -2,34 +2,23 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { 
     Home, 
-    Search, 
     Compass, 
     MessageSquare, 
     Bell, 
     PlusSquare, 
-    User, 
     LogOut,
-    Menu,
     Sun,
     Moon
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useThemeStore } from "@/stores/useThemeStore";
-import { Button } from "../ui/button";
-import { 
-    DropdownMenu, 
-    DropdownMenuContent, 
-    DropdownMenuItem, 
-    DropdownMenuTrigger 
-} from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useEffect } from "react";
 import CreatePostDialog from "../social/CreatePostDialog";
 import NotificationDialog from "../notification/NotificationDialog";
 import { useNotificationStore } from "@/stores/useNotificationStore";
 
 export default function MainLayout() {
-    const { user, logout } = useAuthStore();
+    const { user, signOut } = useAuthStore();
     const { isDarK, toggleTheme } = useThemeStore();
     const location = useLocation();
     const navigate = useNavigate();
@@ -146,7 +135,7 @@ export default function MainLayout() {
 
                     {/* Logout */}
                     <button
-                        onClick={logout}
+                        onClick={signOut}
                         className="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-red-500/10 text-red-500 w-full text-left group"
                     >
                         <LogOut className="size-5 transition-transform duration-200 group-hover:scale-110" />

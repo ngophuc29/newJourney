@@ -134,6 +134,11 @@ export default function ProfilePage() {
         }
     }, [username]);
 
+    const handleDeletePostLocal = (postId: string) => {
+        setPosts(prev => prev.filter(p => p._id !== postId));
+        setStats(prev => ({ ...prev, posts: Math.max(0, prev.posts - 1) }));
+    };
+
     const handleFollowToggle = async () => {
         if (!profileUser) return;
         setIsFollowing(!isFollowing);
@@ -172,7 +177,7 @@ export default function ProfilePage() {
             });
 
             if (res.ok) {
-                const data = await res.json();
+                await res.json();
                 // Redirect to chat
                 navigate("/chat");
             } else {
@@ -624,7 +629,7 @@ export default function ProfilePage() {
             <Dialog open={!!selectedPost} onOpenChange={(open) => !open && setSelectedPost(null)}>
                 <DialogContent className="sm:max-w-[650px] bg-card border border-border/40 text-foreground p-0 overflow-hidden flex items-center justify-center">
                     {selectedPost && (
-                        <div className="w-full flex justify-center">
+                        <div className="w-full flex justify-center mt-6">
                             <PostCard 
                                 post={selectedPost} 
                                 onDelete={(deletedId) => {
