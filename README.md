@@ -1,14 +1,14 @@
 <h1 align="center">
   <br>
-  💬 NewJourney
+  🌐 NewJourney
   <br>
 </h1>
 
 <p align="center">
-  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMHBrYjBteDAybzh6ZW41MTZhZzdycGliZXFnMDlqdWx3bDhtNnQwcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/2IudUHdI075HL02Pkk/giphy.gif" alt="NewJourney Chat App" width="320" />
+  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMHBrYjBteDAybzh6ZW41MTZhZzdycGliZXFnMDlqdWx3bDhtNnQwcCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/2IudUHdI075HL02Pkk/giphy.gif" alt="NewJourney Social App" width="320" />
 </p>
 
-<h4 align="center">A modern, real-time full-stack chat application built with React, Node.js, Socket.IO & MongoDB.</h4>
+<h4 align="center">A modern full-stack social network application — inspired by Facebook & Instagram — built with React, Node.js, Socket.IO & MongoDB.</h4>
 
 <p align="center">
   <a href="#-features">Features</a> •
@@ -44,61 +44,89 @@
 - **Password hashing** with `bcrypt` (salt rounds = 10)
 - **Protected routes** on both frontend (React Router) and backend (JWT middleware)
 
-### 💬 Real-time Messaging
-- **Direct (1-on-1) messaging** with friends
-- **Group chat** with full group management
+### 📰 News Feed & Posts (Facebook-style)
+- **Personalised News Feed** (`/`) — shows posts from people you follow plus public trending posts
+- **Create posts** with text, multiple images, and/or videos (uploaded to Cloudinary)
+- **Image/Video Carousel** — swipe through multiple media items on a single post
+- **Like posts** — toggleable reaction with live counter update
+- **Nested comments & replies** — full multi-level comment thread on each post
+- **Quick post box** — click "Bạn đang nghĩ gì thế?" or the photo/video shortcuts to open the Create Post dialog instantly
+- **Post detail page** (`/post/:postId`) — dedicated page for each post, accessible from notifications
+- **Delete posts** — post owners can remove their own posts; the feed updates immediately
+- **Share link** — copy the direct URL to any post to the clipboard
+
+### 📸 Stories / Khoảnh khắc (Instagram-style)
+- **Đăng tải Khoảnh khắc**: Upload image or short video Stories
+- **Auto-expiry**: Stories disappear automatically after **24 hours** via MongoDB TTL index
+- **Story Tray**: Horizontally scrollable strip at the top of the feed showing active friends' Stories
+- **Story Viewer**:
+  - Beautiful full-screen viewer with automatic progress bar (5 seconds per story)
+  - Navigate forward/backward between stories of the same user or switch to another friend
+  - Auto-marks stories as viewed on display; shows viewer count & list
+  - **Smart pause** — progress pauses automatically while typing a reply
+  - **Quick emoji reactions** (❤️ 🙌 🔥 👏 😂 😢) — tap to react to a story
+  - **Reply via DM** — replies are sent directly to the story author's inbox
+
+### 👤 User Profile (Instagram-style)
+- **Cover photo + Avatar** — full-width banner with overlapping circular avatar
+- **Edit profile** — change display name, bio, phone number directly from the profile page
+- **Upload avatar & cover photo** — images are stored on Cloudinary and updated in real time
+- **Social stats** — Bài viết / Người theo dõi / Đang theo dõi — click each to see the full list
+- **Post grid** (`/profile/:username`) — Instagram-style square grid of all user posts; click any post to open a quick preview modal with full like/comment support
+- **Message shortcut** — "Nhắn tin" button on any other user's profile creates or opens a direct conversation and redirects to `/chat`
+
+### 🤝 Follow System
+- **Follow / Unfollow** users from the Feed suggestions or their profile page
+- **Followers & Following lists** — viewable as a modal from the profile stats
+- **Suggested users** panel on the feed right-hand column
+
+### 💬 Real-time Messaging (Chat)
+- **Direct (1-on-1) messaging** — preserved as a dedicated full-screen interface at `/chat`
+- **Group chat** with full group management (rename, add/remove members, transfer ownership, leave)
 - **Socket.IO** powered real-time delivery — no page refresh needed
 - **Media sharing** — send images, videos, and files in conversations (via Cloudinary)
-- **🎙️ Audio Messages (Tin nhắn thoại)** — gửi và phát tin nhắn thoại trực tiếp bằng trình phát custom AudioPlayer
+- **🎙️ Audio messages** — record and play voice notes with a custom AudioPlayer
 - **Emoji reactions** — react to any message with any emoji
-- **Message revocation** — unsend your own messages; the message is cleared for all participants
+- **Message revocation** — unsend your own messages (cleared for all participants)
 - **Infinite scroll / pagination** for message history (cursor-based)
 - **Unread message counters** per conversation
 - **Mark as seen** — conversations are marked read when opened
 - **Online presence indicators** — see which friends are currently online
+- **Back to Feed button** — prominent button in the chat sidebar to return to the News Feed
 
-### 📸 Stories / Khoảnh khắc (Instagram-style)
-- **Đăng tải Khoảnh khắc**: Người dùng có thể đăng tải hình ảnh hoặc video ngắn làm Story
-- **Tự động biến mất**: Các Story tự động hết hạn và ẩn đi sau **24 giờ** nhờ vào chỉ mục TTL của MongoDB
-- **Story Tray**: Thanh trượt hiển thị danh sách bạn bè đang hoạt động có Story ở đầu trang nhắn tin
-- **Story Viewer**:
-  - Trình xem Story đẹp mắt với thanh tiến trình (progress bar) chạy tự động (5 giây/story)
-  - Hỗ trợ chuyển đổi Story nhanh (trước/sau) của cùng một người dùng hoặc giữa các bạn bè với nhau
-  - Tự động đánh dấu đã xem Story khi hiển thị
-  - Thống kê số lượng và danh sách người xem Story
-
-### 🔔 Real-time Notification Center / Trung tâm thông báo
-- **Chuông thông báo**: Nằm ở thanh tiêu đề (header) hiển thị số lượng thông báo chưa đọc theo thời gian thực
-- **Hỗ trợ các loại thông báo**: Yêu cầu kết bạn, lời mời vào nhóm, lượt nhắc tên (mention)
-- **Hành động nhanh**: Cho phép người dùng đánh dấu đã đọc, chấp nhận/từ chối kết bạn hoặc xóa thông báo trực tiếp từ menu thả xuống (dropdown) mà không cần chuyển trang
-
-### 👥 Social / Friend System
-- **Send friend requests** with an optional message
-- **Accept / Decline** incoming friend requests
-- **Remove friends**
-- **Suggested users** — discover people you may know
-- **Search users** by username
+### 🔔 Notification Centre
+- **Badge counter** — bell icon in the sidebar shows the live count of unread notifications
+- **Supported notification types**:
+  - `post_like` — someone liked your post
+  - `post_comment` — someone commented on your post
+  - `follow` — someone started following you
+  - `friend_request` — someone sent you a friend request
+  - `group_invite` — you were invited to a group
+- **Smart navigation on click**:
+  - Like / Comment notifications → navigate to the exact post at `/post/:postId`
+  - If you are **already viewing that post**, the notification click triggers a **silent data refresh** (no page reload) so the like/comment count updates instantly
+  - Follow notifications → navigate to the sender's profile
+- **Mark as read / delete** — per-notification actions directly from the dialog
 
 ### 🗂️ Group Chat Management
 - Create group conversations (name + multiple members)
-- **Rename group**
-- **Add / Remove members**
+- **Rename group**, **Add / Remove members**
 - **Transfer group ownership** to another member
 - **Leave group** (with optional owner handover)
-- System messages are emitted for membership events
+- System messages emitted for membership events
 
 ### 📱 Progressive Web App (PWA)
-- **Cài đặt ứng dụng**: Hỗ trợ cài đặt ứng dụng chat trực tiếp lên màn hình điện thoại hoặc máy tính (Desktop/Mobile)
-- **Giao diện di động**: Tối ưu hóa UI/UX cho màn hình cảm ứng, mang lại trải nghiệm mượt mà như app native
-- **Hiển thị thông báo cài đặt (PwaInstallPrompt)** khi truy cập bằng các trình duyệt hỗ trợ
+- **Install on home screen** — supported on both desktop and mobile browsers
+- **Install prompt banner** (`PwaInstallPrompt`) shown on compatible browsers
+- Mobile-optimised UI with bottom navigation bar
 
 ### 🎨 UI / UX
-- Fully responsive layout
-- Dark / Light mode toggle (persisted)
-- Skeleton loading states for conversations and messages
+- **Responsive layout** — dual-column desktop layout, bottom-tab mobile layout
+- **Dark / Light mode** toggle (persisted via Zustand + localStorage)
+- **MainLayout** — shared sidebar (desktop) + bottom nav (mobile) wrapping all social pages; Chat stays isolated to preserve its original full-screen experience
+- Skeleton loading states for conversations, messages, and feeds
 - Emoji picker powered by `@emoji-mart/react`
 - Toast notifications via `sonner`
-- Avatar upload with Cloudinary CDN
 
 ---
 
@@ -145,53 +173,59 @@
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     CLIENT (Browser)                │
-│                                                     │
-│   React + TypeScript + Vite                        │
-│   ┌──────────┐  ┌────────────┐  ┌───────────────┐  │
-│   │  Pages   │  │ Components │  │    Stores     │  │
-│   │ SignIn   │  │ Auth Forms │  │ useAuthStore  │  │
-│   │ SignUp   │  │ Chat UI    │  │ useChatStore  │  │
-│   │ ChatApp  │  │ Sidebar    │  │ useFriendStore│  │
-│   └────┬─────┘  └─────┬──────┘  └──────┬────────┘  │
-│        │              │                │           │
-│        └──────────────┴────────────────┘           │
-│                        │                           │
-│              ┌─────────┴──────────┐                │
-│              │    HTTP (Axios)     │  WS (Socket.IO)│
-└──────────────┼────────────────────┼────────────────┘
-               │                    │
-               ▼                    ▼
-┌─────────────────────────────────────────────────────┐
-│                  SERVER (Node.js / Express)          │
-│                                                     │
-│   ┌──────────────────┐  ┌──────────────────────┐   │
-│   │   REST API       │  │   Socket.IO Server   │   │
-│   │  /api/auth       │  │                      │   │
-│   │  /api/users      │  │  - online-users      │   │
-│   │  /api/friend     │  │  - new-message       │   │
-│   │  /api/message    │  │  - message-reaction  │   │
-│   │  /api/convo      │  │  - message-revoked   │   │
-│   └────────┬─────────┘  └──────────┬───────────┘   │
-│            │                       │               │
-│   ┌────────▼───────────────────────▼───────────┐   │
-│   │            Middleware Layer                 │   │
-│   │  authMiddleware • friendMiddleware          │   │
-│   │  socketAuthMiddleware • uploadMiddleware    │   │
-│   └────────────────────┬────────────────────────┘  │
-│                        │                           │
-│   ┌────────────────────▼────────────────────────┐  │
-│   │          MongoDB (Atlas)                     │  │
-│   │  Users • Sessions • Friends • FriendRequests│  │
-│   │  Conversations • Messages                   │  │
-│   └─────────────────────────────────────────────┘  │
-│                        │                           │
-│   ┌────────────────────▼────────────────────────┐  │
-│   │              Cloudinary CDN                  │  │
-│   │         (Image & Video Storage)              │  │
-│   └─────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                      CLIENT (Browser)                        │
+│                                                              │
+│   React + TypeScript + Vite                                 │
+│   ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐ │
+│   │    Pages     │  │  Components  │  │      Stores       │ │
+│   │ FeedPage     │  │ PostCard     │  │ useAuthStore      │ │
+│   │ ProfilePage  │  │ StoryTray    │  │ useChatStore      │ │
+│   │ PostDetail   │  │ MainLayout   │  │ useNotification   │ │
+│   │ ChatApp      │  │ Notification │  │ useStoryStore     │ │
+│   │ ExplorePage  │  │ CreatePost   │  │ useFriendStore    │ │
+│   └──────┬───────┘  └──────┬───────┘  └────────┬──────────┘ │
+│          └─────────────────┴───────────────────┘            │
+│                             │                               │
+│                ┌────────────┴──────────────┐                │
+│                │  HTTP (Axios) + WS (Socket.IO)             │
+└────────────────┼───────────────────────────┼────────────────┘
+                 │                           │
+                 ▼                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│                  SERVER (Node.js / Express)                   │
+│                                                              │
+│   ┌──────────────────────┐  ┌──────────────────────────┐    │
+│   │      REST API        │  │    Socket.IO Server       │    │
+│   │  /api/auth           │  │                          │    │
+│   │  /api/users          │  │  - online-users           │    │
+│   │  /api/friend         │  │  - new-message            │    │
+│   │  /api/message        │  │  - message-reaction       │    │
+│   │  /api/conversation   │  │  - message-revoked        │    │
+│   │  /api/posts          │  │  - new-notification       │    │
+│   │  /api/social         │  │                          │    │
+│   │  /api/stories        │  └──────────────────────────┘    │
+│   │  /api/notifications  │                                   │
+│   └──────────┬───────────┘                                   │
+│              │                                               │
+│   ┌──────────▼────────────────────────────────────────────┐  │
+│   │                  Middleware Layer                      │  │
+│   │  authMiddleware • friendMiddleware                     │  │
+│   │  socketAuthMiddleware • uploadMiddleware               │  │
+│   └──────────┬────────────────────────────────────────────┘  │
+│              │                                               │
+│   ┌──────────▼────────────────────────────────────────────┐  │
+│   │              MongoDB (Atlas)                           │  │
+│   │  Users • Sessions • Friends • FriendRequests          │  │
+│   │  Conversations • Messages • Notifications             │  │
+│   │  Stories • Posts • Comments • Follows                 │  │
+│   └──────────┬────────────────────────────────────────────┘  │
+│              │                                               │
+│   ┌──────────▼────────────────────────────────────────────┐  │
+│   │                Cloudinary CDN                          │  │
+│   │    (Avatar • Cover Photo • Post Media • Story Media)  │  │
+│   └───────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### Authentication Flow
@@ -232,28 +266,35 @@ newJourney/
 │   │   │   ├── friendController.js
 │   │   │   ├── messageController.js
 │   │   │   ├── notificationController.js
+│   │   │   ├── postController.js        # ✨ Posts, likes, comments
+│   │   │   ├── socialController.js      # ✨ Follow/unfollow system
 │   │   │   ├── storyController.js
-│   │   │   └── userController.js
+│   │   │   └── userController.js        # ✨ Avatar + cover photo upload
 │   │   ├── middlewares/          # Express middleware
 │   │   │   ├── authMiddleware.js      # JWT verification
 │   │   │   ├── friendMiddle.js        # Friend/group membership checks
 │   │   │   ├── socketMiddleware.js    # Socket.IO auth
 │   │   │   └── uploadMiddleware.js    # Multer + Cloudinary
 │   │   ├── models/               # Mongoose schemas
-│   │   │   ├── User.js
+│   │   │   ├── User.js                  # ✨ + coverPhotoURL, coverPhotoID
 │   │   │   ├── Session.js
 │   │   │   ├── Friend.js
 │   │   │   ├── FriendRequest.js
 │   │   │   ├── Conversation.js
 │   │   │   ├── Message.js
-│   │   │   ├── Notification.js
-│   │   │   └── Story.js
+│   │   │   ├── Notification.js          # ✨ + follow, post_like, post_comment types
+│   │   │   ├── Story.js
+│   │   │   ├── Post.js                  # ✨ NEW — post schema
+│   │   │   ├── Comment.js               # ✨ NEW — nested comment schema
+│   │   │   └── Follow.js                # ✨ NEW — follow relationship schema
 │   │   ├── routes/               # Express route definitions
 │   │   │   ├── authRoutes.js
 │   │   │   ├── conversationRoutes.js
 │   │   │   ├── friendRoute.js
 │   │   │   ├── messageRoutes.js
 │   │   │   ├── notificationRoutes.js
+│   │   │   ├── postRoutes.js            # ✨ NEW
+│   │   │   ├── socialRoute.js           # ✨ NEW
 │   │   │   ├── storyRoutes.js
 │   │   │   └── userRoutes.js
 │   │   ├── socket/
@@ -277,16 +318,21 @@ newJourney/
     │   │   │   ├── ProtectedRoute.tsx # Guards authenticated pages
     │   │   │   └── Logout.tsx
     │   │   ├── chat/                  # Chat UI components (AudioPlayer, etc.)
-    │   │   ├── sidebar/               # Sidebar navigation
+    │   │   ├── layout/
+    │   │   │   └── MainLayout.tsx     # ✨ NEW — shared sidebar + bottom nav
+    │   │   ├── social/                # ✨ NEW
+    │   │   │   ├── PostCard.tsx       # Post card with carousel, like, comment
+    │   │   │   └── CreatePostDialog.tsx # Reusable post creation dialog
+    │   │   ├── sidebar/               # Sidebar navigation (Chat)
     │   │   ├── profile/               # User profile components
     │   │   ├── friends/               # Friend list components
     │   │   ├── friendRequest/         # Friend request components
     │   │   ├── AddFriendModel/        # Add friend modal
     │   │   ├── createNewChat/         # New chat/group modal
     │   │   ├── newGroupChat/          # Group chat creation
-    │   │   ├── story/                 # Instagram-like Story components (StoryTray, StoryViewer)
-    │   │   ├── notification/          # NotificationBell component
-    │   │   └── ui/                    # shadcn/ui base components + PwaInstallPrompt.tsx
+    │   │   ├── story/                 # Story components (StoryTray, StoryViewer)
+    │   │   ├── notification/          # NotificationBell & NotificationDialog
+    │   │   └── ui/                    # shadcn/ui base components + PwaInstallPrompt
     │   ├── hooks/                     # Custom React hooks
     │   ├── lib/
     │   │   ├── axios.ts               # Axios instance + interceptors
@@ -294,7 +340,11 @@ newJourney/
     │   ├── pages/
     │   │   ├── SignInpage.tsx
     │   │   ├── SignUpPage.tsx
-    │   │   └── ChatApp.tsx
+    │   │   ├── ChatApp.tsx            # Full-screen chat (isolated, no MainLayout)
+    │   │   ├── FeedPage.tsx           # ✨ NEW — News feed homepage
+    │   │   ├── ExplorePage.tsx        # ✨ NEW — Explore / Discover page
+    │   │   ├── ProfilePage.tsx        # ✨ NEW — User profile page
+    │   │   └── PostDetailPage.tsx     # ✨ NEW — Single post detail page
     │   ├── services/                  # API call functions
     │   │   ├── authService.ts
     │   │   └── chatService.ts
@@ -325,7 +375,7 @@ newJourney/
 
 ## 📡 API Reference
 
-> All routes under `/api/users`, `/api/friend`, `/api/message`, `/api/conversation` require a valid `Authorization: Bearer <accessToken>` header.
+> All routes (except `/api/auth`) require a valid `Authorization: Bearer <accessToken>` header.
 
 ### 🔐 Auth — `/api/auth`
 
@@ -348,14 +398,7 @@ newJourney/
 }
 ```
 
-#### `POST /api/auth/signin` — Request Body
-```json
-{
-  "username": "johndoe",
-  "password": "mypassword"
-}
-```
-**Response:**
+#### `POST /api/auth/signin` — Response
 ```json
 {
   "message": "User John Doe đã login thành công",
@@ -372,6 +415,9 @@ newJourney/
 |--------|----------|-------------|
 | `GET` | `/me` | Get currently authenticated user's profile |
 | `PATCH` | `/me/avatar` | Upload and update user avatar (multipart/form-data) |
+| `PATCH` | `/me/cover` | ✨ Upload and update user cover photo |
+| `PATCH` | `/me` | ✨ Update display name, bio, phone number |
+| `GET` | `/:username/profile` | ✨ Get any user's public profile |
 
 ---
 
@@ -390,6 +436,33 @@ newJourney/
 
 ---
 
+### 📝 Posts — `/api/posts` ✨ NEW
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/` | Create a new post (supports up to 10 media files via `multipart/form-data`) |
+| `GET` | `/feed` | Get paginated news feed posts (from followed users) |
+| `GET` | `/explore` | Get public/trending posts for the Explore page |
+| `GET` | `/user/:username` | Get all posts by a specific user |
+| `GET` | `/:postId` | Get a single post by ID |
+| `POST` | `/:postId/like` | Toggle like on a post |
+| `POST` | `/:postId/comments` | Add a comment (or reply) to a post |
+| `GET` | `/:postId/comments` | Get comments for a post |
+| `DELETE` | `/:postId` | Delete a post (owner only) |
+
+---
+
+### 🤝 Social (Follow) — `/api/social` ✨ NEW
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/follow/:userId` | Follow or unfollow a user (toggle) |
+| `GET` | `/followers/:userId` | Get a user's followers list |
+| `GET` | `/following/:userId` | Get a user's following list |
+| `GET` | `/suggestions` | Get suggested users to follow |
+
+---
+
 ### 💬 Messages — `/api/message`
 
 | Method | Endpoint | Description |
@@ -398,17 +471,6 @@ newJourney/
 | `POST` | `/group` | Send a group message (supports file upload) |
 | `PATCH` | `/:messageId/reactions` | Toggle an emoji reaction on a message |
 | `PATCH` | `/:messageId/revoke` | Revoke (unsend) a message |
-
-**Send Direct Message — Request (multipart/form-data):**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `recipientId` | string | ✅* | Target user's MongoDB ObjectId |
-| `content` | string | ✅* | Message text |
-| `conversationId` | string | ❌ | Existing conversation ID (optional) |
-| `file` | File | ❌ | Image or video attachment |
-
-*Either `content` or `file` must be provided.*
 
 ---
 
@@ -432,9 +494,9 @@ newJourney/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/` | Lấy tất cả thông báo của người dùng hiện tại |
-| `PATCH` | `/:notificationId/read` | Đánh dấu thông báo là đã đọc |
-| `DELETE` | `/:notificationId` | Xóa thông báo |
+| `GET` | `/` | Get all notifications for the current user |
+| `PATCH` | `/:notificationId/read` | Mark a notification as read |
+| `DELETE` | `/:notificationId` | Delete a notification |
 
 ---
 
@@ -442,9 +504,9 @@ newJourney/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/` | Tải lên Story mới (hỗ trợ tải lên hình ảnh/video bằng `multipart/form-data`) |
-| `GET` | `/` | Lấy danh sách Story của bản thân và bạn bè (hoạt động trong vòng 24 giờ) |
-| `PATCH` | `/:storyId/view` | Đánh dấu đã xem Story |
+| `POST` | `/` | Upload a new Story (image/video via `multipart/form-data`) |
+| `GET` | `/` | Get active Stories from self and followed users (last 24 hours) |
+| `PATCH` | `/:storyId/view` | Mark a Story as viewed |
 
 ---
 
@@ -466,6 +528,7 @@ newJourney/
 | `update-conversation` | `conversation` | Updated conversation metadata |
 | `message-reaction-updated` | `{ messageId, conversationId, reactions }` | Reactions changed on a message |
 | `message-revoked` | `{ messageId, conversationId, isRevoked, revokedAt }` | A message was revoked |
+| `new-notification` | `notification` | ✨ A new social notification (like, comment, follow) |
 
 > Socket connections are **authenticated** via the `socketAuthMiddleware`, which verifies the `Authorization` header containing the JWT access token before allowing a socket to connect.
 
@@ -482,8 +545,34 @@ newJourney/
 | `displayName` | String | `"Họ Tên"` format |
 | `avatarURL` | String | Cloudinary URL |
 | `avatarID` | String | Cloudinary public ID |
+| `coverPhotoURL` | String | ✨ Cloudinary URL for cover photo |
+| `coverPhotoID` | String | ✨ Cloudinary public ID for cover photo |
 | `bio` | String | Max 500 characters |
 | `phone` | String | Sparse (unique but nullable) |
+
+### Post ✨ NEW
+| Field | Type | Notes |
+|-------|------|-------|
+| `userId` | ObjectId (ref: User) | Post author |
+| `content` | String | Text content |
+| `media` | Array | `[{ url, type, publicId }]` — up to 10 items |
+| `likes` | Array of ObjectIds | Users who liked the post |
+| `commentsCount` | Number | Cached comment count |
+
+### Comment ✨ NEW
+| Field | Type | Notes |
+|-------|------|-------|
+| `postId` | ObjectId (ref: Post) | Indexed |
+| `userId` | ObjectId (ref: User) | Comment author |
+| `parentId` | ObjectId (ref: Comment) | `null` for top-level; set for replies |
+| `content` | String | Comment text |
+
+### Follow ✨ NEW
+| Field | Type | Notes |
+|-------|------|-------|
+| `followerId` | ObjectId (ref: User) | The user who follows |
+| `followingId` | ObjectId (ref: User) | The user being followed |
+| — | — | Compound unique index on `{ followerId, followingId }` |
 
 ### Session
 | Field | Type | Notes |
@@ -497,13 +586,6 @@ newJourney/
 |-------|------|-------|
 | `userA` | ObjectId (ref: User) | Normalized (smaller ID always stored as `userA`) |
 | `userB` | ObjectId (ref: User) | Compound unique index with `userA` |
-
-### FriendRequest
-| Field | Type | Notes |
-|-------|------|-------|
-| `from` | ObjectId (ref: User) | Sender |
-| `to` | ObjectId (ref: User) | Recipient |
-| `status` | String | `"pending"` \| `"accepted"` \| `"declined"` |
 
 ### Conversation
 | Field | Type | Notes |
@@ -525,33 +607,31 @@ newJourney/
 | `mediaUrl` | String | Cloudinary URL |
 | `mediaType` | String | `"image"` \| `"video"` \| `"file"` \| `"audio"` |
 | `mediaPublicId` | String | Cloudinary public ID |
-| `fileName` | String | Tên tệp đính kèm |
-| `fileSize` | Number | Dung lượng tệp đính kèm |
-| `duration` | Number | Thời lượng tin nhắn thoại (giây) |
+| `fileName` | String | Attachment file name |
+| `fileSize` | Number | Attachment file size |
+| `duration` | Number | Voice message duration (seconds) |
 | `type` | String | `"user"` \| `"system"` |
 | `reactions` | Array | `[{ userId, emoji }]` |
 | `isRevoked` | Boolean | Default: `false` |
 | `revokedAt` | Date | Set when message is revoked |
 
-*Compound index on `{ conversationId, createdAt: -1 }` for efficient cursor-based pagination.*
-
 ### Notification
 | Field | Type | Notes |
 |-------|------|-------|
-| `userId` | ObjectId (ref: User) | Người nhận thông báo (được đánh chỉ mục) |
-| `type` | String | `"friend_request"` \| `"mention"` \| `"group_invite"` |
-| `senderId` | ObjectId (ref: User) | Người gửi hành động |
-| `relatedId` | ObjectId | ID liên kết (Tin nhắn hoặc Cuộc trò chuyện) |
-| `isRead` | Boolean | Trạng thái đã đọc (Mặc định: `false`) |
+| `userId` | ObjectId (ref: User) | Recipient (indexed) |
+| `type` | String | `"friend_request"` \| `"mention"` \| `"group_invite"` \| `"follow"` \| `"post_like"` \| `"post_comment"` |
+| `senderId` | ObjectId (ref: User) | Actor |
+| `relatedId` | ObjectId | Related Post ID (for like/comment notifications) |
+| `isRead` | Boolean | Default: `false` |
 
 ### Story
 | Field | Type | Notes |
 |-------|------|-------|
-| `userId` | ObjectId (ref: User) | Người đăng Story |
-| `mediaUrl` | String | Đường dẫn tệp tin trên Cloudinary |
+| `userId` | ObjectId (ref: User) | Story author |
+| `mediaUrl` | String | Cloudinary URL |
 | `mediaType` | String | `"image"` \| `"video"` |
-| `viewers` | Array of ObjectIds (ref: User) | Danh sách người đã xem |
-| `createdAt` | Date | Thời gian tạo (Có TTL index tự động xóa sau **24 giờ**) |
+| `viewers` | Array of ObjectIds (ref: User) | Users who have viewed this story |
+| `createdAt` | Date | TTL index — auto deleted after **24 hours** |
 
 ---
 
@@ -654,8 +734,42 @@ Navigate to [http://localhost:5173](http://localhost:5173) and create an account
 | **Input validation** | Zod on frontend; manual validation in controller on backend |
 | **Authorization** | Every protected route verifies JWT via `authMiddleware` |
 | **Message ownership** | Revoke endpoint checks `senderId === currentUser._id` |
+| **Post ownership** | Delete post endpoint checks `userId === currentUser._id` |
 | **Group membership** | `checkGroupMembership` middleware validates before group operations |
 | **Friendship check** | `checkFriendship` middleware prevents messaging non-friends |
+
+---
+
+## 🧩 State Management
+
+The app uses **Zustand** with selective persistence via `localStorage`:
+
+| Store | Persisted | Description |
+|-------|-----------|-------------|
+| `useAuthStore` | `user` only | Auth state, token management, sign-in/out actions |
+| `useChatStore` | `conversations` only | Conversation list, messages, real-time updates |
+| `useFriendStore` | ❌ | Friends, requests, suggestions |
+| `useNotificationStore` | ❌ | Real-time notifications (like, comment, follow), unread count, read actions |
+| `useStoryStore` | ❌ | Instagram-like stories, active viewer state, uploads |
+| `useSocketStore` | ❌ | Socket.IO connection lifecycle |
+| `useThemeStore` | `isDark` | Dark/Light mode preference |
+| `useUserStore` | ❌ | Profile update actions |
+
+> Access tokens are stored **only in memory** (Zustand store, not persisted to `localStorage`) for security. On page refresh, the `ProtectedRoute` component automatically attempts a silent token refresh using the `httpOnly` refresh token cookie.
+
+---
+
+## 📝 Validation Rules
+
+Frontend (Zod) and Backend (controller) are kept in sync:
+
+| Field | Rule | Message |
+|-------|------|---------|
+| `username` | min 3 chars | "Tên đăng nhập phải có ít nhất 3 ký tự" |
+| `password` | min 8 chars | "Mật khẩu phải có ít nhất 8 ký tự" |
+| `email` | valid format | "Email không hợp lệ" |
+| `firstName` | min 1 char | "Tên bắt buộc phải có" |
+| `lastName` | min 1 char | "Họ bắt buộc phải có" |
 
 ---
 
@@ -681,39 +795,6 @@ A `vercel.json` is included in the frontend for SPA routing support:
 ```
 
 > 💡 **Tip:** On Render's free plan, the backend sleeps after 15 minutes of inactivity. The app implements a **health check polling mechanism** in `App.tsx` that pings `/api/health` every 3 seconds and displays a friendly "Đang khởi động server..." screen until the server wakes up.
-
----
-
-## 🧩 State Management
-
-The app uses **Zustand** with selective persistence via `localStorage`:
-
-| Store | Persisted | Description |
-|-------|-----------|-------------|
-| `useAuthStore` | `user` only | Auth state, token management, sign-in/out actions |
-| `useChatStore` | `conversations` only | Conversation list, messages, real-time updates |
-| `useFriendStore` | ❌ | Friends, requests, suggestions |
-| `useNotificationStore` | ❌ | Real-time notifications, unread count, read actions |
-| `useStoryStore` | ❌ | Instagram-like stories, active viewer state, uploads |
-| `useSocketStore` | ❌ | Socket.IO connection lifecycle |
-| `useThemeStore` | `isDark` | Dark/Light mode preference |
-| `useUserStore` | ❌ | Profile update actions |
-
-> Access tokens are stored **only in memory** (Zustand store, not persisted to `localStorage`) for security. On page refresh, the `ProtectedRoute` component automatically attempts a silent token refresh using the `httpOnly` refresh token cookie.
-
----
-
-## 📝 Validation Rules
-
-Frontend (Zod) and Backend (controller) are kept in sync:
-
-| Field | Rule | Frontend Message | Backend Message |
-|-------|------|-----------------|-----------------|
-| `username` | min 3 chars | "Tên đăng nhập phải có ít nhất 3 ký tự" | Same |
-| `password` | min 8 chars | "Mật khẩu phải có ít nhất 8 ký tự" | Same |
-| `email` | valid format | "Email không hợp lệ" | Same (regex) |
-| `firstName` | min 1 char | "Tên bắt buộc phải có" | Same |
-| `lastName` | min 1 char | "Họ bắt buộc phải có" | Same |
 
 ---
 
