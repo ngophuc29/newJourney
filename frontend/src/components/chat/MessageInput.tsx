@@ -455,7 +455,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
   }
 
   return (
-    <div className="flex flex-col bg-background">
+    <div className="flex flex-col bg-background max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:z-30 max-md:border-t max-md:border-border/40">
       {/* Reply Preview */}
       {replyingTo && !editingMessage && <ReplyPreview />}
 
@@ -483,7 +483,7 @@ const MessageInput = ({ selectedConvo }: { selectedConvo: Conversation }) => {
         </div>
       )}
 
-      <div className="p-3">
+      <div className="p-3 max-md:pb-5">
         {mediaPreview && !editingMessage && (
           <div className="relative w-fit max-w-[220px] rounded-md border border-border bg-muted p-2 mb-2">
             <Button

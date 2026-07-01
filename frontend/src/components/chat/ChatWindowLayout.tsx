@@ -55,7 +55,7 @@ const ChatWindowLayout = () => {
       {/* main content: chat + media gallery */}
       <div className="flex-1 flex overflow-hidden">
         {/* chat messages + input */}
-        <div className="flex-1 flex flex-col min-w-0 h-full">
+        <div className="flex-1 flex flex-col min-w-0 h-full max-md:pb-[76px]">
           <div className="flex-1 overflow-y-auto bg-primary-foreground">
             <ChatWindowBody />
           </div>
