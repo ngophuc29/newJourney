@@ -17,9 +17,10 @@ import type { Friend } from "@/types/User";
 interface MyFriendsDialogProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
+  onMessageOpened?: () => void;
 }
 
-const MyFriendsDialog = ({ open, setOpen }: MyFriendsDialogProps) => {
+const MyFriendsDialog = ({ open, setOpen, onMessageOpened }: MyFriendsDialogProps) => {
   const [keyword, setKeyword] = useState("");
   const [removingId, setRemovingId] = useState<string | null>(null);
   const { friends, loading, getFriends, removeFriend } = useFriendStore();
@@ -46,6 +47,7 @@ const MyFriendsDialog = ({ open, setOpen }: MyFriendsDialogProps) => {
   const handleMessage = async (friend: Friend) => {
     await openDirectConversation(friend._id);
     setOpen(false);
+    onMessageOpened?.();
   };
 
   const handleRemoveFriend = async (friend: Friend) => {

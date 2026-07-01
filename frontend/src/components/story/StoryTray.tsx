@@ -6,7 +6,12 @@ import UserAvatar from "../chat/UserAvatar";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const StoryTray = () => {
+interface StoryTrayProps {
+  variant?: "feed" | "sidebar";
+  className?: string;
+}
+
+const StoryTray = ({ variant = "sidebar", className }: StoryTrayProps) => {
   const { user } = useAuthStore();
   const { stories, loading, fetchStories, uploadStory, setViewerState } = useStoryStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -46,7 +51,15 @@ const StoryTray = () => {
 
 
   return (
-    <div className="flex items-center gap-4 py-12 px-4 overflow-x-auto no-scrollbar bg-background border-b border-border/50 h-[110px]">
+    <div
+      className={cn(
+        "flex items-center gap-4 overflow-x-auto no-scrollbar bg-background",
+        variant === "feed"
+          ? "h-[118px] px-4 py-4 rounded-2xl border border-border/40 shadow-sm"
+          : "h-[110px] px-4 py-12 border-b border-border/50",
+        className
+      )}
+    >
       {/* Nút đăng story của bản thân */}
       <div className="flex flex-col items-center shrink-0 gap-1 cursor-pointer group">
         <div className="relative">

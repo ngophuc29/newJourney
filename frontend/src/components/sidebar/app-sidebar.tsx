@@ -90,7 +90,7 @@ const {convoLoading} =useChatStore()
         </SidebarGroup>
 
         {/* Story Tray */}
-        <StoryTray />
+        <StoryTray variant="sidebar" />
 
         {/* new chat */}
         <SidebarGroup>
@@ -102,8 +102,8 @@ const {convoLoading} =useChatStore()
 
         {/* group chat */}
         <SidebarGroup>
-          <SidebarGroupLabel className="uppercase"> Nhom chat</SidebarGroupLabel>
-          <SidebarGroupAction title="Tao nhom"
+          <SidebarGroupLabel className="uppercase">Nhóm chat</SidebarGroupLabel>
+          <SidebarGroupAction title="Tạo nhóm"
             className="cursor-pointer">
             <NewGroupChatModel />
           </SidebarGroupAction>
@@ -115,8 +115,8 @@ const {convoLoading} =useChatStore()
 
         {/* direct message */}
         <SidebarGroup>
-          <SidebarGroupLabel className="uppercase">Ban be</SidebarGroupLabel>
-          <SidebarGroupAction title="Ket ban"
+          <SidebarGroupLabel className="uppercase">Bạn bè</SidebarGroupLabel>
+          <SidebarGroupAction title="Kết bạn"
             className="cursor-pointer">
             <AddFriendModel />
           </SidebarGroupAction>

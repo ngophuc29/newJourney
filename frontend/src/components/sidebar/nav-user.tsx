@@ -21,7 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import type { User } from "@/types/User"
-import { ChevronsUpDownIcon, BellIcon, UserIcon, UsersIcon } from "lucide-react"
+import { ChevronsUpDownIcon, BellIcon, UserIcon, UsersIcon, UserPlusIcon } from "lucide-react"
 import Logout from "../auth/Logout"
 import { useState } from "react"
 import FriendRequestDialog from "../friendRequest/FriendRequestDialog"
@@ -30,6 +30,7 @@ import MyFriendsDialog from "../friends/MyFriendsDialog"
 import NotificationDialog from "../notification/NotificationDialog"
 import { useNotificationStore } from "@/stores/useNotificationStore"
 import { useEffect } from "react"
+import { useFriendStore } from "@/stores/useFriendStore"
 
 export function NavUser({
   user,
@@ -44,9 +45,12 @@ export function NavUser({
   
   const { notifications, fetchNotifications } = useNotificationStore();
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const { receivedList, getAllFriendRequests } = useFriendStore();
+  const receivedRequestCount = receivedList.length;
 
   useEffect(() => {
     fetchNotifications();
+    getAllFriendRequests();
   }, []);
   return (
 
@@ -98,13 +102,27 @@ export function NavUser({
                 >
                   <UserIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground"
                   />
-                  Tai khoan
+                  Tài khoản
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setMyFriendsOpen(true)}
                 >
                   <UsersIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
-                  Ban be cua toi
+                  Bạn bè của tôi
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setfriendRequestOpen(true)}
+                  className="justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <UserPlusIcon className="text-muted-foreground dark:group-focus:!text-accent-foreground" />
+                    Lời mời kết bạn
+                  </span>
+                  {receivedRequestCount > 0 && (
+                    <span className="bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+                      {receivedRequestCount}
+                    </span>
+                  )}
                 </DropdownMenuItem>
                  <DropdownMenuItem
                   onClick={() => setNotificationOpen(true)}
@@ -126,7 +144,7 @@ export function NavUser({
               <DropdownMenuItem className="cursor-pointer" variant="destructive">
                 <Logout
                 />
-                Log out
+                Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

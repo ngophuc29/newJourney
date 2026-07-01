@@ -5,6 +5,7 @@ import {
     Compass, 
     MessageSquare, 
     Bell, 
+    Users,
     PlusSquare, 
     LogOut,
     Sun,
@@ -16,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import CreatePostDialog from "../social/CreatePostDialog";
 import NotificationDialog from "../notification/NotificationDialog";
 import { useNotificationStore } from "@/stores/useNotificationStore";
+import MyFriendsDialog from "../friends/MyFriendsDialog";
 
 export default function MainLayout() {
     const { user, signOut } = useAuthStore();
@@ -24,6 +26,7 @@ export default function MainLayout() {
     const navigate = useNavigate();
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isFriendsOpen, setIsFriendsOpen] = useState(false);
     
     const { notifications, fetchNotifications } = useNotificationStore();
 
@@ -71,6 +74,14 @@ export default function MainLayout() {
                         })}
 
                         {/* Notifications */}
+                        <button
+                            onClick={() => setIsFriendsOpen(true)}
+                            className="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-accent/50 text-muted-foreground w-full text-left group"
+                        >
+                            <Users className="size-5 transition-transform duration-200 group-hover:scale-110" />
+                            <span className="text-sm">Bạn bè</span>
+                        </button>
+
                         <button
                             onClick={() => setIsNotificationsOpen(true)}
                             className="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-accent/50 text-muted-foreground w-full text-left group"
@@ -158,6 +169,12 @@ export default function MainLayout() {
                 >
                     <PlusSquare className="size-5" />
                 </button>
+                <button 
+                    onClick={() => setIsFriendsOpen(true)} 
+                    className="flex flex-col items-center justify-center text-muted-foreground"
+                >
+                    <Users className="size-5" />
+                </button>
                 <Link to="/chat" className="flex flex-col items-center justify-center text-muted-foreground">
                     <MessageSquare className="size-5" />
                 </Link>
@@ -193,6 +210,12 @@ export default function MainLayout() {
             <NotificationDialog 
                 open={isNotificationsOpen} 
                 setOpen={setIsNotificationsOpen} 
+            />
+
+            <MyFriendsDialog
+                open={isFriendsOpen}
+                setOpen={setIsFriendsOpen}
+                onMessageOpened={() => navigate("/chat")}
             />
         </div>
     );

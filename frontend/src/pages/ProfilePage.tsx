@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Camera, Loader2, MessageSquare, Heart, MessageCircle, Grid, Settings } from "lucide-react";
+import { Camera, Loader2, MessageSquare, Heart, MessageCircle, Grid, Settings, UserPlus } from "lucide-react";
 import PostCard from "@/components/social/PostCard";
 import { toast } from "sonner";
+import { chatService } from "@/services/chatService";
+import { useChatStore } from "@/stores/useChatStore";
+import { useSocketStore } from "@/stores/useSocketStore";
+import { useFriendStore } from "@/stores/useFriendStore";
 
 interface SocialUser {
     _id: string;
@@ -54,6 +58,15 @@ export default function ProfilePage() {
     const { user: currentUser } = useAuthStore();
     const token = useAuthStore.getState().accessToken;
     const baseUrl = import.meta.env.VITE_API_URL;
+    const {
+        friends,
+        sentList,
+        receivedList,
+        loading: friendLoading,
+        getFriends,
+        getAllFriendRequests,
+        addFriend,
+    } = useFriendStore();
 
     const [profileUser, setProfileUser] = useState<SocialUser | null>(null);
     const [stats, setStats] = useState<SocialStats>({ posts: 0, followers: 0, following: 0 });
@@ -83,6 +96,13 @@ export default function ProfilePage() {
     const [uploadingCover, setUploadingCover] = useState(false);
 
     const isOwnProfile = currentUser?.username === username;
+    const isFriend = !!profileUser && friends.some((friend) => friend._id === profileUser._id);
+    const sentRequest = profileUser
+        ? sentList.find((request) => request.to?._id === profileUser._id)
+        : null;
+    const receivedRequest = profileUser
+        ? receivedList.find((request) => request.from?._id === profileUser._id)
+        : null;
 
     const fetchProfileData = async () => {
         setLoading(true);
@@ -134,6 +154,13 @@ export default function ProfilePage() {
         }
     }, [username]);
 
+    useEffect(() => {
+        if (!currentUser) return;
+
+        getFriends();
+        getAllFriendRequests();
+    }, [currentUser?._id, username, getFriends, getAllFriendRequests]);
+
     const handleDeletePostLocal = (postId: string) => {
         setPosts(prev => prev.filter(p => p._id !== postId));
         setStats(prev => ({ ...prev, posts: Math.max(0, prev.posts - 1) }));
@@ -163,30 +190,58 @@ export default function ProfilePage() {
 
     const handleMessageClick = async () => {
         if (!profileUser) return;
-        try {
-            // Find or create direct message conversation
-            const res = await fetch(`${baseUrl}/conversation`, {
-                method: "POST",
-                headers: { 
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    recipientId: profileUser._id
-                })
-            });
+        if (!isFriend) {
+            toast.error("Chỉ có thể nhắn tin với bạn bè");
+            return;
+        }
 
-            if (res.ok) {
-                await res.json();
-                // Redirect to chat
-                navigate("/chat");
-            } else {
+        try {
+            const conversation = await chatService.createConversation("direct", "", [profileUser._id]);
+
+            if (!conversation) {
                 toast.error("Không thể tạo cuộc trò chuyện");
+                return;
             }
+
+            useChatStore.getState().addConvo(conversation);
+            useSocketStore.getState().socket?.emit("join-conversation", conversation._id);
+            navigate("/chat");
         } catch (error) {
             console.error("Error starting chat:", error);
-            toast.error("Đã xảy ra lỗi");
+            const message =
+                error &&
+                typeof error === "object" &&
+                "response" in error &&
+                error.response &&
+                typeof error.response === "object" &&
+                "data" in error.response &&
+                error.response.data &&
+                typeof error.response.data === "object" &&
+                "message" in error.response.data
+                    ? String(error.response.data.message)
+                    : "Không thể tạo cuộc trò chuyện";
+
+            toast.error(message);
         }
+    };
+
+    const handleAddFriend = async () => {
+        if (!profileUser || isFriend || sentRequest || receivedRequest) return;
+
+        try {
+            const message = await addFriend(profileUser._id);
+            toast.success(message || "Đã gửi lời mời kết bạn");
+        } catch (error) {
+            toast.error(
+                error instanceof Error ? error.message : "Không thể gửi lời mời kết bạn",
+            );
+        }
+    };
+
+    const getFriendButtonLabel = () => {
+        if (sentRequest) return "Đã gửi lời mời";
+        if (receivedRequest) return "Đã nhận lời mời";
+        return "Kết bạn";
     };
 
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -420,9 +475,22 @@ export default function ProfilePage() {
                                     >
                                         {isFollowing ? "Đang theo dõi" : "Theo dõi"}
                                     </Button>
+                                    {!isFriend && (
+                                        <Button
+                                            onClick={handleAddFriend}
+                                            variant="outline"
+                                            disabled={friendLoading || !!sentRequest || !!receivedRequest}
+                                            className="rounded-lg text-xs font-semibold px-4 h-9 flex items-center gap-2"
+                                        >
+                                            <UserPlus className="size-4" />
+                                            {getFriendButtonLabel()}
+                                        </Button>
+                                    )}
                                     <Button 
                                         onClick={handleMessageClick}
                                         variant="outline" 
+                                        disabled={!isFriend}
+                                        title={isFriend ? "Nhắn tin" : "Chỉ có thể nhắn tin với bạn bè"}
                                         className="rounded-lg text-xs font-semibold px-4 h-9 flex items-center gap-2"
                                     >
                                         <MessageSquare className="size-4" />

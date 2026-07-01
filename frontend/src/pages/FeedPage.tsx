@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import StoryTray from "@/components/story/StoryTray";
 import PostCard from "@/components/social/PostCard";
 import CreatePostDialog from "@/components/social/CreatePostDialog";
+import FeedFriendsPanel from "@/components/social/FeedFriendsPanel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -133,8 +134,12 @@ export default function FeedPage() {
                 {/* LEFT: Feed Content */}
                 <div className="flex-1 flex flex-col items-center min-w-0 max-w-[600px]">
                     {/* Story Tray */}
-                    <div className="w-full mb-6 border border-border/40 rounded-2xl overflow-hidden bg-card/30 backdrop-blur-md">
-                        <StoryTray />
+                    <div className="w-full mb-6">
+                        <StoryTray variant="feed" />
+                    </div>
+
+                    <div className="w-full mb-6 lg:hidden">
+                        <FeedFriendsPanel compact />
                     </div>
 
                     {/* Quick Post Creator */}
@@ -235,6 +240,10 @@ export default function FeedPage() {
                             </Link>
                         </div>
                     )}
+
+                    <div className="mb-6">
+                        <FeedFriendsPanel />
+                    </div>
 
                     {/* Suggestions Section */}
                     {suggestions.length > 0 && (
