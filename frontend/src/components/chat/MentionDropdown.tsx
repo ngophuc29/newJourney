@@ -1,12 +1,16 @@
 import { cn } from "@/lib/utils";
-import type { Participant } from "@/types/chat";
 import UserAvatar from "./UserAvatar";
 import { useEffect, useRef, useState } from "react";
 
 interface MentionDropdownProps {
-    participants: Participant[];
+    participants: {
+        _id: string;
+        displayName: string;
+        avatarURL?: string | null;
+        username?: string;
+    }[];
     query: string;
-    onSelect: (participant: Participant) => void;
+    onSelect: (participant: any) => void;
     onClose: () => void;
     visible: boolean;
 }

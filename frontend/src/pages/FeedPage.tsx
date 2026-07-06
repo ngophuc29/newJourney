@@ -13,15 +13,6 @@ import { toast } from "sonner";
 
 import SEO from "@/components/common/SEO";
 
-interface SuggestedUser {
-    _id: string;
-    username: string;
-    displayName: string;
-    avatarURL?: string;
-    bio?: string;
-    friendRequestStatus?: "sent" | "received" | "none";
-}
-
 interface PostType {
     _id: string;
     userId: {
