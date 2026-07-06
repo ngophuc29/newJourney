@@ -26,6 +26,7 @@ export default function SEO({
       <title>{siteTitle}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* OpenGraph / Facebook */}
       <meta property="og:title" content={siteTitle} />
