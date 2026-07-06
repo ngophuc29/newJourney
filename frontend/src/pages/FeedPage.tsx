@@ -6,6 +6,7 @@ import FeedFriendsPanel from "@/components/social/FeedFriendsPanel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useFriendStore } from "@/stores/useFriendStore";
 import { Image, Video, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ interface SuggestedUser {
     displayName: string;
     avatarURL?: string;
     bio?: string;
+    friendRequestStatus?: "sent" | "received" | "none";
 }
 
 interface PostType {
@@ -39,13 +41,12 @@ export default function FeedPage() {
     const baseUrl = import.meta.env.VITE_API_URL;
 
     const [posts, setPosts] = useState<PostType[]>([]);
-    const [suggestions, setSuggestions] = useState<SuggestedUser[]>([]);
+    const { suggestedUsers, getSuggestedFriends, addFriend } = useFriendStore();
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
 
     const fetchFeed = async (pageNum: number, append = false) => {
         if (pageNum === 1) setLoading(true);
@@ -72,24 +73,10 @@ export default function FeedPage() {
         }
     };
 
-    const fetchSuggestions = async () => {
-        try {
-            const res = await fetch(`${baseUrl}/social/suggestions`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setSuggestions(data);
-            }
-        } catch (error) {
-            console.error("Error fetching suggestions:", error);
-        }
-    };
-
     useEffect(() => {
         fetchFeed(1);
-        fetchSuggestions();
-    }, []);
+        getSuggestedFriends();
+    }, [getSuggestedFriends]);
 
     const handleLoadMore = () => {
         if (!hasMore || loadingMore) return;
@@ -98,29 +85,12 @@ export default function FeedPage() {
         fetchFeed(nextPage, true);
     };
 
-    const handleToggleFollow = async (targetUserId: string) => {
-        const isFollowing = followingMap[targetUserId];
-        
-        // Optimistic update
-        setFollowingMap(prev => ({ ...prev, [targetUserId]: !isFollowing }));
-        
+    const handleAddFriend = async (userId: string) => {
         try {
-            const res = await fetch(`${baseUrl}/social/follow/${targetUserId}`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setFollowingMap(prev => ({ ...prev, [targetUserId]: data.isFollowing }));
-                toast.success(data.message);
-                // Refresh feed to show followed user's posts
-                fetchFeed(1);
-            } else {
-                setFollowingMap(prev => ({ ...prev, [targetUserId]: isFollowing }));
-            }
-        } catch (error) {
-            setFollowingMap(prev => ({ ...prev, [targetUserId]: isFollowing }));
-            console.error("Error following user:", error);
+            const msg = await addFriend(userId);
+            toast.success(msg || "Đã gửi lời mời kết bạn");
+        } catch (error: any) {
+            toast.error(error.message || "Không thể gửi lời mời kết bạn");
         }
     };
 
@@ -246,14 +216,14 @@ export default function FeedPage() {
                     </div>
 
                     {/* Suggestions Section */}
-                    {suggestions.length > 0 && (
+                    {suggestedUsers.length > 0 && (
                         <div className="flex flex-col bg-card border border-border/40 rounded-2xl p-4 shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-xs font-bold text-muted-foreground uppercase">Gợi ý cho bạn</span>
                             </div>
 
                             <div className="flex flex-col gap-4">
-                                {suggestions.map((sug) => (
+                                {suggestedUsers.map((sug) => (
                                     <div key={sug._id} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <Link to={`/profile/${sug.username}`}>
@@ -271,12 +241,18 @@ export default function FeedPage() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => handleToggleFollow(sug._id)}
-                                            className={`text-xs font-bold transition-colors ${followingMap[sug._id] ? "text-muted-foreground" : "text-primary hover:text-primary-hover"}`}
-                                        >
-                                            {followingMap[sug._id] ? "Đang theo dõi" : "Theo dõi"}
-                                        </button>
+                                        {sug.friendRequestStatus === "sent" ? (
+                                            <span className="text-xs text-muted-foreground font-semibold">Đã gửi</span>
+                                        ) : sug.friendRequestStatus === "received" ? (
+                                            <span className="text-xs text-muted-foreground font-semibold">Đã nhận</span>
+                                        ) : (
+                                            <button 
+                                                onClick={() => handleAddFriend(sug._id)}
+                                                className="text-xs font-bold text-primary hover:text-primary-hover transition-colors"
+                                            >
+                                                Kết bạn
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

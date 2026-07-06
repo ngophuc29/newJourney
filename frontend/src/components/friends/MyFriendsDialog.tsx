@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -108,21 +109,27 @@ const MyFriendsDialog = ({ open, setOpen, onMessageOpened }: MyFriendsDialogProp
                 key={friend._id}
                 className="flex min-h-16 items-center gap-3 rounded-md px-2 py-2 hover:bg-muted/60"
               >
-                <UserAvatar
-                  type="chat"
-                  name={friend.displayName || friend.username}
-                  avatarURL={friend.avatarURL}
-                  className="size-10"
-                />
+                <Link
+                  to={`/profile/${friend.username}`}
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-80 transition-opacity"
+                >
+                  <UserAvatar
+                    type="chat"
+                    name={friend.displayName || friend.username}
+                    avatarURL={friend.avatarURL}
+                    className="size-10 shrink-0"
+                  />
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {friend.displayName || friend.username}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    @{friend.username}
-                  </p>
-                </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium hover:underline">
+                      {friend.displayName || friend.username}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      @{friend.username}
+                    </p>
+                  </div>
+                </Link>
 
                 <div className="flex shrink-0 items-center gap-2">
                   <Button

@@ -2,6 +2,7 @@ import Friend from "../models/Friend.js"
 import User from "../models/User.js"
 import FriendRequest from "../models/FriendRequest.js"
 import Notification from "../models/Notification.js"
+import Follow from "../models/Follow.js"
 import { io } from "../socket/index.js"
 
 
@@ -106,6 +107,16 @@ export const acceptFriend = async (req, res) => {
             userA: request.from,
             userB: request.to
         })
+
+        // Tự động tạo follow chéo khi kết bạn thành công
+        await Follow.insertMany([
+            { followerId: request.from, followingId: request.to },
+            { followerId: request.to, followingId: request.from }
+        ], { ordered: false }).catch(err => {
+            if (err.code !== 11000) {
+                console.error("Loi khi tu dong follow cheo:", err.message);
+            }
+        });
 
         await FriendRequest.findByIdAndDelete(requestId)
 
@@ -226,6 +237,14 @@ export const removeFriend = async (req, res) => {
         if (!friendship) {
             return res.status(404).json({ message: "Hai nguoi chua la ban be" })
         }
+
+        // Tự động xóa follow chéo khi hủy kết bạn
+        await Follow.deleteMany({
+            $or: [
+                { followerId: userId, followingId: friendId },
+                { followerId: friendId, followingId: userId }
+            ]
+        }).catch(err => console.error("Loi khi xoa follow cheo:", err.message));
 
         io.to(userId.toString()).emit("friend-removed", { friendId })
         io.to(friendId.toString()).emit("friend-removed", { friendId: userId.toString() })

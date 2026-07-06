@@ -13,6 +13,7 @@ import { chatService } from "@/services/chatService";
 import { useChatStore } from "@/stores/useChatStore";
 import { useSocketStore } from "@/stores/useSocketStore";
 import { useFriendStore } from "@/stores/useFriendStore";
+import ProfileDialog from "@/components/profile/ProfileDialog";
 
 interface SocialUser {
     _id: string;
@@ -82,6 +83,7 @@ export default function ProfilePage() {
     const [editPhone, setEditPhone] = useState("");
     const [savingProfile, setSavingProfile] = useState(false);
 
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isFollowersOpen, setIsFollowersOpen] = useState(false);
     const [isFollowingOpen, setIsFollowingOpen] = useState(false);
     const [followList, setFollowList] = useState<FollowUser[]>([]);
@@ -462,7 +464,12 @@ export default function ProfilePage() {
                                     >
                                         Chỉnh sửa hồ sơ
                                     </Button>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => setIsSettingsOpen(true)}
+                                        className="h-9 w-9 rounded-full"
+                                    >
                                         <Settings className="size-5" />
                                     </Button>
                                 </>
@@ -709,6 +716,8 @@ export default function ProfilePage() {
                     )}
                 </DialogContent>
             </Dialog>
+            {/* SETTINGS DIALOG */}
+            <ProfileDialog open={isSettingsOpen} setOpen={setIsSettingsOpen} />
         </div>
     );
 }

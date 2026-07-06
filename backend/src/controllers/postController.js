@@ -2,6 +2,7 @@ import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
 import Follow from "../models/Follow.js";
 import User from "../models/User.js";
+import Friend from "../models/Friend.js";
 import Notification from "../models/Notification.js";
 import { uploadMediaFromBuffer } from "../middlewares/uploadMiddleware.js";
 import { io } from "../socket/index.js";
@@ -161,8 +162,13 @@ export const getUserPosts = async (req, res) => {
             privacyFilter = ["public", "friends", "private"];
         } else {
             // Check if they are friends
-            const isFollowed = await Follow.findOne({ followerId: currentUserId, followingId: user._id });
-            if (isFollowed) {
+            let userA = currentUserId.toString();
+            let userB = user._id.toString();
+            if (userA > userB) {
+                [userA, userB] = [userB, userA];
+            }
+            const isFriend = await Friend.findOne({ userA, userB });
+            if (isFriend) {
                 privacyFilter = ["public", "friends"];
             }
         }
