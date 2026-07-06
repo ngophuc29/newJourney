@@ -148,16 +148,19 @@ const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
     };
 
     const formatTimeAgo = (dateStr: string) => {
-        const date = new Date(dateStr);
         const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMins / 600);
+        const date = new Date(dateStr);
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (seconds < 60) return "Vừa xong";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} phút trước`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours} giờ trước`;
+        const days = Math.floor(hours / 24);
+        if (days < 7) return `${days} ngày trước`;
         
-        if (diffMins < 1) return "Vừa xong";
-        if (diffMins < 60) return `${diffMins} phút trước`;
-        if (diffHours < 24) return `${Math.floor(diffMins / 60)} giờ trước`;
-        return date.toLocaleDateString("vi-VN", { month: "short", day: "numeric" });
+        return date.toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
     };
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
