@@ -17,6 +17,7 @@ import { useAuthStore } from "./stores/useAuthStore"
 import { useSocketStore } from "./stores/useSocketStore"
 import StoryViewer from "./components/story/StoryViewer"
 import PwaInstallPrompt from "./components/ui/PwaInstallPrompt"
+import WelcomeTourDialog from "./components/ui/WelcomeTourDialog"
 const HEALTH_CHECK_INTERVAL = 3000
 
 function App() { 
@@ -218,6 +219,7 @@ function App() {
       </Routes>
       
       </BrowserRouter>
+      <WelcomeTourDialog />
       <StoryViewer />
       <PwaInstallPrompt />
     </>
