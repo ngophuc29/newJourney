@@ -222,39 +222,69 @@ export const getUserPosts = async (req, res) => {
     }
 };
 
-// Like/Unlike a post
+// Like/Unlike/React to a post
 export const toggleLikePost = async (req, res) => {
     try {
         const { postId } = req.params;
+        const { type = "like" } = req.body;
         const userId = req.user._id;
+
+        // validate type
+        const validTypes = ["like", "love", "haha", "wow", "sad", "angry"];
+        if (!validTypes.includes(type)) {
+            return res.status(400).json({ message: "Loại cảm xúc không hợp lệ" });
+        }
         
         const post = await Post.findById(postId);
         if (!post) {
             return res.status(404).json({ message: "Không tìm thấy bài viết" });
         }
+
+        if (!post.reactions) {
+            post.reactions = [];
+        }
         
-        const isLiked = post.likes.includes(userId);
+        const existingReactionIndex = post.reactions.findIndex(
+            r => r.userId.toString() === userId.toString()
+        );
         
-        if (isLiked) {
-            post.likes = post.likes.filter(id => id.toString() !== userId.toString());
-        } else {
-            post.likes.push(userId);
-            
-            // Create notification (if liking someone else's post)
-            if (post.userId.toString() !== userId.toString()) {
-                const newNotification = new Notification({
-                    userId: post.userId,
-                    type: "post_like",
-                    senderId: userId,
-                    relatedId: post._id
-                });
-                await newNotification.save();
-                
-                // Real-time notify via Socket.io
-                io.to(post.userId.toString()).emit("new-notification", {
-                    notification: await newNotification.populate("senderId", "displayName avatarURL")
-                });
+        let removed = false;
+        let reactionChanged = false;
+        
+        if (existingReactionIndex !== -1) {
+            const currentReactionType = post.reactions[existingReactionIndex].type;
+            if (currentReactionType === type) {
+                // If clicking the same reaction, remove it (unlike)
+                post.reactions.splice(existingReactionIndex, 1);
+                post.likes = post.likes.filter(id => id.toString() !== userId.toString());
+                removed = true;
+            } else {
+                // If clicking a different reaction, update it
+                post.reactions[existingReactionIndex].type = type;
+                reactionChanged = true;
             }
+        } else {
+            // Add new reaction
+            post.reactions.push({ userId, type });
+            if (!post.likes.includes(userId)) {
+                post.likes.push(userId);
+            }
+        }
+        
+        // Create notification (if liking/reacting to someone else's post and it's a new reaction)
+        if (!removed && !reactionChanged && post.userId.toString() !== userId.toString()) {
+            const newNotification = new Notification({
+                userId: post.userId,
+                type: "post_like",
+                senderId: userId,
+                relatedId: post._id
+            });
+            await newNotification.save();
+            
+            // Real-time notify via Socket.io
+            io.to(post.userId.toString()).emit("new-notification", {
+                notification: await newNotification.populate("senderId", "displayName avatarURL")
+            });
         }
         
         await post.save();
@@ -262,11 +292,12 @@ export const toggleLikePost = async (req, res) => {
         return res.status(200).json({
             likes: post.likes,
             likesCount: post.likes.length,
-            isLiked: !isLiked
+            reactions: post.reactions,
+            isLiked: !removed
         });
     } catch (error) {
         console.error("Error in toggleLikePost:", error);
-        return res.status(500).json({ message: "Lỗi máy chủ khi thích bài viết" });
+        return res.status(500).json({ message: "Lỗi máy chủ khi cập nhật cảm xúc bài viết" });
     }
 };
 
@@ -434,5 +465,21 @@ export const getPostById = async (req, res) => {
     } catch (error) {
         console.error("Error in getPostById:", error);
         return res.status(500).json({ message: "Lỗi máy chủ khi lấy chi tiết bài viết" });
+    }
+};
+
+// Get Post Reactions list populated with user details
+export const getPostReactions = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const post = await Post.findById(postId)
+            .populate("reactions.userId", "displayName username avatarURL");
+        if (!post) {
+            return res.status(404).json({ message: "Không tìm thấy bài viết" });
+        }
+        return res.status(200).json(post.reactions || []);
+    } catch (error) {
+        console.error("Error in getPostReactions:", error);
+        return res.status(500).json({ message: "Lỗi máy chủ khi lấy danh sách cảm xúc" });
     }
 };

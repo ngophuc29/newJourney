@@ -1,5 +1,5 @@
 import express from "express";
-import { createPost, getFeed, getExplorePosts, getUserPosts, toggleLikePost, addComment, getPostComments, deletePost, getPostById } from "../controllers/postController.js";
+import { createPost, getFeed, getExplorePosts, getUserPosts, toggleLikePost, addComment, getPostComments, deletePost, getPostById, getPostReactions } from "../controllers/postController.js";
 import { upload } from "../middlewares/uploadMiddleware.js";
 
 const router = express.Router();
@@ -13,5 +13,6 @@ router.post("/:postId/comments", addComment);
 router.get("/:postId/comments", getPostComments);
 router.delete("/:postId", deletePost);
 router.get("/:postId", getPostById);
+router.get("/:postId/reactions", getPostReactions);
 
 export default router;

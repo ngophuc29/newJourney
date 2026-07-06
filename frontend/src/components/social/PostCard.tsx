@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { 
     DropdownMenu, 
@@ -8,6 +8,7 @@ import {
     DropdownMenuItem, 
     DropdownMenuTrigger 
 } from "../ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useFriendStore } from "@/stores/useFriendStore";
 import MentionDropdown from "../chat/MentionDropdown";
@@ -54,9 +55,19 @@ interface PostCardProps {
         commentsCount: number;
         createdAt: string;
         mentions?: PostUser[];
+        reactions?: { userId: string; type: string }[];
     };
     onDelete?: (postId: string) => void;
 }
+
+const REACTION_EMOJIS: Record<string, { emoji: string; label: string; color: string }> = {
+    like: { emoji: "👍", label: "Thích", color: "text-blue-500 font-semibold" },
+    love: { emoji: "❤️", label: "Yêu thích", color: "text-rose-500 font-semibold" },
+    haha: { emoji: "😂", label: "Haha", color: "text-amber-500 font-semibold" },
+    wow: { emoji: "😮", label: "Wow", color: "text-amber-500 font-semibold" },
+    sad: { emoji: "😢", label: "Buồn", color: "text-amber-500 font-semibold" },
+    angry: { emoji: "😡", label: "Phẫn nộ", color: "text-orange-600 font-bold" }
+};
 
 // Simple time formatter helper
 const formatTimeAgo = (dateString: string) => {
@@ -80,9 +91,74 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
     const token = useAuthStore.getState().accessToken;
     const baseUrl = import.meta.env.VITE_API_URL;
 
-    const [isLiked, setIsLiked] = useState(post.likes.includes(user?._id || ""));
+    // Initialize reactions state
+    const initialReactions = post.reactions || [];
+    const [reactions, setReactions] = useState<{ userId: string; type: string }[]>(initialReactions);
+    
+    // Check current user's reaction
+    const currentUserReaction = reactions.find(r => r.userId === user?._id);
+    const [userReaction, setUserReaction] = useState<string | null>(currentUserReaction ? currentUserReaction.type : null);
+    
     const [likesCount, setLikesCount] = useState(post.likes.length);
     const [showComments, setShowComments] = useState(false);
+    const [showReactionsMenu, setShowReactionsMenu] = useState(false);
+    const hoverTimeoutRef = useRef<number | null>(null);
+    
+    // Dialog for viewing who reacted
+    const [showReactionsDialog, setShowReactionsDialog] = useState(false);
+    const [reactionsList, setReactionsList] = useState<any[]>([]);
+    const [loadingReactions, setLoadingReactions] = useState(false);
+
+    const handleOpenReactionsDialog = async () => {
+        setShowReactionsDialog(true);
+        setLoadingReactions(true);
+        try {
+            const res = await fetch(`${baseUrl}/posts/${post._id}/reactions`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setReactionsList(data);
+            }
+        } catch (error) {
+            console.error("Error fetching reactions list:", error);
+        } finally {
+            setLoadingReactions(false);
+        }
+    };
+
+    useEffect(() => {
+        return () => {
+            if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+        };
+    }, []);
+
+    const handleMouseEnter = () => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+        setShowReactionsMenu(true);
+    };
+
+    const handleMouseLeave = () => {
+        hoverTimeoutRef.current = window.setTimeout(() => {
+            setShowReactionsMenu(false);
+        }, 400);
+    };
+
+    const getTopReactions = () => {
+        if (!reactions || reactions.length === 0) return null;
+        const counts: Record<string, number> = {};
+        reactions.forEach(r => {
+            counts[r.type] = (counts[r.type] || 0) + 1;
+        });
+        const sorted = Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([type]) => REACTION_EMOJIS[type]?.emoji);
+        return sorted;
+    };
     const [comments, setComments] = useState<CommentType[]>([]);
     const [newComment, setNewComment] = useState("");
     const [replyToId, setReplyToId] = useState<string | null>(null);
@@ -137,9 +213,25 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
         return result;
     };
 
-    const handleLike = async () => {
-        setIsLiked(!isLiked);
-        setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
+    const handleReact = async (type: string) => {
+        const isRemoving = userReaction === type;
+        const oldReaction = userReaction;
+        const oldReactionsList = reactions;
+        
+        // Optimistic UI updates
+        if (isRemoving) {
+            setUserReaction(null);
+            setLikesCount(prev => Math.max(0, prev - 1));
+            setReactions(prev => prev.filter(r => r.userId !== user?._id));
+        } else {
+            setUserReaction(type);
+            if (!oldReaction) {
+                setLikesCount(prev => prev + 1);
+                setReactions(prev => [...prev, { userId: user?._id || "", type }]);
+            } else {
+                setReactions(prev => prev.map(r => r.userId === user?._id ? { ...r, type } : r));
+            }
+        }
 
         try {
             const res = await fetch(`${baseUrl}/posts/${post._id}/like`, {
@@ -147,17 +239,25 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                 headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
-                }
+                },
+                body: JSON.stringify({ type })
             });
-            if (!res.ok) {
-                // Revert state on failure
-                setIsLiked(isLiked);
-                setLikesCount(likesCount);
+            if (res.ok) {
+                const data = await res.json();
+                setLikesCount(data.likesCount);
+                setReactions(data.reactions || []);
+                const myReaction = (data.reactions || []).find((r: any) => r.userId === user?._id);
+                setUserReaction(myReaction ? myReaction.type : null);
+            } else {
+                setUserReaction(oldReaction);
+                setLikesCount(oldReactionsList.length);
+                setReactions(oldReactionsList);
             }
         } catch (error) {
-            setIsLiked(isLiked);
-            setLikesCount(likesCount);
-            console.error(error);
+            console.error("Error setting reaction:", error);
+            setUserReaction(oldReaction);
+            setLikesCount(oldReactionsList.length);
+            setReactions(oldReactionsList);
         }
     };
 
@@ -379,30 +479,97 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                 </div>
             )}
 
+            {/* Reactions and Comments count summary */}
+            {(likesCount > 0 || post.commentsCount > 0) && (
+                <div className="px-4 py-2 border-b border-border/20 flex items-center justify-between text-xs text-muted-foreground bg-accent/5">
+                    <div 
+                        className="flex items-center gap-1 cursor-pointer hover:underline"
+                        onClick={handleOpenReactionsDialog}
+                    >
+                        {likesCount > 0 && (
+                            <>
+                                {getTopReactions() && (
+                                    <div className="flex items-center -space-x-1 mr-1">
+                                        {getTopReactions()?.map((emoji, idx) => (
+                                            <span key={idx} className="text-sm select-none animate-in zoom-in-50 duration-200">{emoji}</span>
+                                        ))}
+                                    </div>
+                                )}
+                                <span className="font-medium">
+                                    {userReaction 
+                                        ? (likesCount === 1 ? "Bạn" : `Bạn và ${likesCount - 1} người khác`) 
+                                        : `${likesCount} người`}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                    {post.commentsCount > 0 && (
+                        <span>{post.commentsCount} bình luận</span>
+                    )}
+                </div>
+            )}
+
             {/* Action Bar */}
-            <div className="p-4 flex flex-col gap-2">
+            <div className="p-2 px-4 flex flex-col gap-2 relative">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button 
-                            onClick={handleLike} 
-                            className={`flex items-center gap-1.5 group transition-colors ${isLiked ? "text-rose-500" : "text-muted-foreground hover:text-foreground"}`}
+                        <div 
+                            className="relative"
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
                         >
-                            <Heart className={`size-6 transition-transform duration-200 group-active:scale-125 ${isLiked ? "fill-rose-500" : ""}`} />
-                            <span className="text-sm font-semibold">{likesCount}</span>
-                        </button>
+                            <button 
+                                onClick={() => handleReact(userReaction ? userReaction : "like")} 
+                                className={`flex items-center gap-1.5 py-1.5 px-2 rounded-lg hover:bg-accent/50 transition-colors duration-150 ${userReaction ? REACTION_EMOJIS[userReaction]?.color : "text-muted-foreground hover:text-foreground"}`}
+                                type="button"
+                            >
+                                {userReaction ? (
+                                    <span className="text-xl leading-none animate-in zoom-in duration-200">{REACTION_EMOJIS[userReaction]?.emoji}</span>
+                                ) : (
+                                    <Heart className="size-6 transition-transform duration-200 group-active:scale-125" />
+                                )}
+                                <span className="text-sm font-semibold">{userReaction ? REACTION_EMOJIS[userReaction]?.label : "Thích"}</span>
+                            </button>
+
+                            {/* Reactions Float Menu */}
+                            {showReactionsMenu && (
+                                <div 
+                                    className="absolute bottom-11 left-0 flex items-center gap-2 bg-background/95 backdrop-blur-md border border-border/50 shadow-xl rounded-full px-3 py-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
+                                    onMouseEnter={handleMouseEnter}
+                                    onMouseLeave={handleMouseLeave}
+                                >
+                                    {Object.entries(REACTION_EMOJIS).map(([type, { emoji, label }]) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => {
+                                                handleReact(type);
+                                                setShowReactionsMenu(false);
+                                            }}
+                                            className="hover:scale-130 active:scale-95 transition-transform duration-150 text-2xl px-1 relative group/item"
+                                            type="button"
+                                        >
+                                            <span>{emoji}</span>
+                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover/item:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                                                {label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         <button 
                             onClick={() => setShowComments(!showComments)} 
-                            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                            className="flex items-center gap-1.5 py-1.5 px-2 rounded-lg hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors duration-150"
                         >
                             <MessageCircle className="size-6" />
-                            <span className="text-sm font-semibold">{post.commentsCount}</span>
+                            <span className="text-sm font-semibold">Bình luận</span>
                         </button>
                     </div>
 
                     <button 
                         onClick={handleShare}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        className="p-1.5 rounded-full hover:bg-accent/50 text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <Share2 className="size-5" />
                     </button>
@@ -512,6 +679,58 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                     </div>
                 </div>
             )}
+
+            {/* Dialog to view post reactions details */}
+            <Dialog open={showReactionsDialog} onOpenChange={setShowReactionsDialog}>
+                <DialogContent className="max-w-md bg-card text-foreground border border-border/40 p-5 rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-bold text-center border-b border-border/20 pb-3">Cảm xúc bài viết</DialogTitle>
+                    </DialogHeader>
+                    <div className="max-h-[350px] overflow-y-auto beautiful-scrollbar mt-2 flex flex-col gap-4">
+                        {loadingReactions ? (
+                            <div className="flex justify-center py-8">
+                                <Loader2 className="size-6 animate-spin text-primary" />
+                            </div>
+                        ) : reactionsList.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-4">Chưa có cảm xúc nào.</p>
+                        ) : (
+                            reactionsList.map((item, idx) => {
+                                const reactor = item.userId;
+                                const reactionType = item.type;
+                                if (!reactor) return null;
+                                return (
+                                    <div key={idx} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Link 
+                                                to={`/profile/${reactor.username}`}
+                                                onClick={() => setShowReactionsDialog(false)}
+                                            >
+                                                <Avatar className="size-9 border border-border/30 hover:opacity-90">
+                                                    <AvatarImage src={reactor.avatarURL} alt={reactor.displayName} />
+                                                    <AvatarFallback>{reactor.displayName?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                            </Link>
+                                            <div className="flex flex-col">
+                                                <Link 
+                                                    to={`/profile/${reactor.username}`}
+                                                    onClick={() => setShowReactionsDialog(false)}
+                                                    className="font-semibold text-sm hover:underline animate-in fade-in duration-200"
+                                                >
+                                                    {reactor.displayName}
+                                                </Link>
+                                                <span className="text-xs text-muted-foreground">@{reactor.username}</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-2xl select-none" title={REACTION_EMOJIS[reactionType]?.label}>
+                                            {REACTION_EMOJIS[reactionType]?.emoji}
+                                        </span>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </article>
     );
 }

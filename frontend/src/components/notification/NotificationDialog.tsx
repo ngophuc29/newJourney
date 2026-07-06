@@ -131,7 +131,7 @@ const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
                 };
             case "post_like":
                 return {
-                    text: `${name} đã thích bài viết của bạn.`,
+                    text: `${name} đã bày tỏ cảm xúc về bài viết của bạn.`,
                     icon: <Heart className="size-4 text-rose-500 fill-rose-500" />,
                 };
             case "post_comment":
