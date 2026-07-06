@@ -52,7 +52,7 @@ const ResetPasswordPage = () => {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10 absolute inset-0 z-0 bg-gradient-purple">
-            <SEO title="Đặt lại mật khẩu" description="Đặt lại mật khẩu mới cho tài khoản NewJourney của bạn." />
+            <SEO title="Đặt lại mật khẩu" description="Đặt lại mật khẩu mới cho tài khoản NewJourney của bạn." noIndex noFollow />
             <div className="w-full max-w-md">
                 <Card className="border-border">
                     <CardHeader className="text-center">

@@ -14,7 +14,7 @@ const ChatApp = () => {
   console.log(user)
   return (
     <>
-    <SEO title="Hộp thư" description="Trò chuyện thời gian thực, trao đổi tin nhắn, hình ảnh và tệp với bạn bè của bạn trên NewJourney." />
+    <SEO title="Hộp thư" description="Trò chuyện thời gian thực, trao đổi tin nhắn, hình ảnh và tệp với bạn bè của bạn trên NewJourney." noIndex noFollow />
     <SidebarProvider>
       <AppSidebar />
         {/* <div className='block'>

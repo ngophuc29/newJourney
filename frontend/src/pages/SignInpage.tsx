@@ -4,7 +4,7 @@ import SEO from "@/components/common/SEO"
 const SignInPage = () => {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10 absolute inset-0 z-0 bg-gradient-purple">
-      <SEO title="Đăng nhập" description="Đăng nhập tài khoản NewJourney để kết nối và chia sẻ ngay hôm nay!" />
+      <SEO title="Đăng nhập" description="Đăng nhập tài khoản NewJourney để kết nối và chia sẻ ngay hôm nay!" noIndex />
       <div className="w-full max-w-sm md:max-w-4xl">
         <SigninForm />
       </div>

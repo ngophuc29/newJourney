@@ -36,7 +36,7 @@ const ForgotPasswordPage = () => {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10 absolute inset-0 z-0 bg-gradient-purple">
-            <SEO title="Quên mật khẩu" description="Khôi phục mật khẩu tài khoản NewJourney của bạn dễ dàng và nhanh chóng." />
+            <SEO title="Quên mật khẩu" description="Khôi phục mật khẩu tài khoản NewJourney của bạn dễ dàng và nhanh chóng." noIndex noFollow />
             <div className="w-full max-w-md">
                 <Card className="border-border">
                     <CardHeader className="text-center">

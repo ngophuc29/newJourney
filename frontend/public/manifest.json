@@ -1,6 +1,7 @@
 {
   "short_name": "NewJourney",
   "name": "NewJourney - Mạng xã hội kết nối giới trẻ",
+  "description": "Kết nối bạn bè, nhắn tin và chia sẻ những khoảnh khắc đáng nhớ trên NewJourney.",
   "icons": [
     {
       "src": "favicon.svg",
@@ -14,9 +15,11 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#4f46e5",
   "background_color": "#ffffff",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "lang": "vi-VN"
 }
