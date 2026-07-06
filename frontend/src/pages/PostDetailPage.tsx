@@ -73,6 +73,7 @@ export default function PostDetailPage() {
     if (loading) {
         return (
             <div className="flex-1 h-full flex flex-col items-center justify-center gap-3 bg-background">
+                <SEO title="Đang tải bài viết" description="Đang tải chi tiết bài viết trên NewJourney." />
                 <Loader2 className="size-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">Đang tải chi tiết bài viết...</span>
             </div>
@@ -82,6 +83,7 @@ export default function PostDetailPage() {
     if (!post) {
         return (
             <div className="flex-1 h-full flex flex-col items-center justify-center gap-2 bg-background p-4 text-center">
+                <SEO title="Không tìm thấy bài viết" description="Bài viết không tồn tại hoặc đã bị xóa." />
                 <h2 className="text-xl font-bold">Bài viết không tồn tại</h2>
                 <p className="text-muted-foreground text-sm max-w-xs">
                     Có thể bài viết này đã bị xóa bởi người đăng hoặc liên kết đã bị lỗi.

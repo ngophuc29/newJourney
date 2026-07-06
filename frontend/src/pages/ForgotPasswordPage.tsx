@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import SEO from "@/components/common/SEO";
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState("");
@@ -35,6 +36,7 @@ const ForgotPasswordPage = () => {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10 absolute inset-0 z-0 bg-gradient-purple">
+            <SEO title="Quên mật khẩu" description="Khôi phục mật khẩu tài khoản NewJourney của bạn dễ dàng và nhanh chóng." />
             <div className="w-full max-w-md">
                 <Card className="border-border">
                     <CardHeader className="text-center">

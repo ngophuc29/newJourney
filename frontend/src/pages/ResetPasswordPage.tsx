@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import SEO from "@/components/common/SEO";
 
 const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -51,6 +52,7 @@ const ResetPasswordPage = () => {
 
     return (
         <div className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10 absolute inset-0 z-0 bg-gradient-purple">
+            <SEO title="Đặt lại mật khẩu" description="Đặt lại mật khẩu mới cho tài khoản NewJourney của bạn." />
             <div className="w-full max-w-md">
                 <Card className="border-border">
                     <CardHeader className="text-center">

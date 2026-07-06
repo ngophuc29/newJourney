@@ -371,6 +371,7 @@ export default function ProfilePage() {
     if (loading) {
         return (
             <div className="flex-1 h-full flex items-center justify-center gap-3">
+                <SEO title="Đang tải hồ sơ" description="Đang tải thông tin trang cá nhân trên NewJourney." />
                 <Loader2 className="size-8 animate-spin text-primary" />
                 <span className="text-sm text-muted-foreground">Đang tải hồ sơ...</span>
             </div>
@@ -380,6 +381,7 @@ export default function ProfilePage() {
     if (!profileUser) {
         return (
             <div className="flex-1 h-full flex flex-col items-center justify-center">
+                <SEO title="Không tìm thấy người dùng" description="Không tìm thấy thông tin người dùng yêu cầu trên NewJourney." />
                 <h2 className="text-xl font-bold">Người dùng không tồn tại</h2>
                 <p className="text-muted-foreground text-sm mt-1">Liên kết có thể bị hỏng hoặc người dùng đã bị xóa.</p>
                 <Button className="mt-4" onClick={() => navigate("/")}>Về trang chủ</Button>
