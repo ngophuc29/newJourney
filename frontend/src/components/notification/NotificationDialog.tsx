@@ -79,7 +79,12 @@ const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
                 navigate(`/profile/${notification.senderId.username}`);
                 setOpen(false);
             }
-        } else if (notification.type === "post_like" || notification.type === "post_comment") {
+        } else if (
+            notification.type === "post_like" || 
+            notification.type === "post_comment" || 
+            notification.type === "post_mention" || 
+            notification.type === "comment_mention"
+        ) {
             if (notification.relatedId) {
                 if (location.pathname === `/post/${notification.relatedId}`) {
                     window.dispatchEvent(new CustomEvent("refresh-post", { detail: { postId: notification.relatedId } }));
@@ -103,6 +108,16 @@ const NotificationDialog = ({ open, setOpen }: NotificationDialogProps) => {
                 return {
                     text: `${name} đã nhắc đến bạn trong cuộc trò chuyện.`,
                     icon: <MessageSquare className="size-4 text-purple-500" />,
+                };
+            case "post_mention":
+                return {
+                    text: `${name} đã nhắc đến bạn trong một bài viết.`,
+                    icon: <MessageSquare className="size-4 text-purple-500" />,
+                };
+            case "comment_mention":
+                return {
+                    text: `${name} đã nhắc đến bạn trong một bình luận.`,
+                    icon: <MessageCircle className="size-4 text-purple-500" />,
                 };
             case "group_invite":
                 return {

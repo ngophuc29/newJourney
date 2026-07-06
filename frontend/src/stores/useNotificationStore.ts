@@ -4,7 +4,7 @@ import api from "@/lib/axios";
 export interface NotificationItem {
   _id: string;
   userId: string;
-  type: "friend_request" | "mention" | "group_invite";
+  type: "friend_request" | "mention" | "group_invite" | "follow" | "post_like" | "post_comment" | "post_mention" | "comment_mention";
   senderId: {
     _id: string;
     displayName: string;

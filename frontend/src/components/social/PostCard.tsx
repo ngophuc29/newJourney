@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -9,6 +9,8 @@ import {
     DropdownMenuTrigger 
 } from "../ui/dropdown-menu";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useFriendStore } from "@/stores/useFriendStore";
+import MentionDropdown from "../chat/MentionDropdown";
 import { toast } from "sonner";
 
 interface MediaItem {
@@ -39,6 +41,7 @@ interface CommentType {
     parentId: string | null;
     createdAt: string;
     replies?: CommentType[];
+    mentions?: CommentUser[];
 }
 
 interface PostCardProps {
@@ -50,6 +53,7 @@ interface PostCardProps {
         likes: string[];
         commentsCount: number;
         createdAt: string;
+        mentions?: PostUser[];
     };
     onDelete?: (postId: string) => void;
 }
@@ -86,6 +90,52 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
     
     // Media Carousel State
     const [currentMediaIdx, setCurrentMediaIdx] = useState(0);
+
+    // Mention States for Comment Input
+    const commentInputRef = useRef<HTMLInputElement>(null);
+    const { friends, getFriends } = useFriendStore();
+    const [mentionOpen, setMentionOpen] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [mentionTriggerIndex, setMentionTriggerIndex] = useState(-1);
+    const [mentionedIds, setMentionedIds] = useState<string[]>([]);
+
+    const renderContentWithMentions = (content: string, mentions?: PostUser[]) => {
+        if (!content) return null;
+        if (!mentions || mentions.length === 0) return content;
+        
+        // Sort by display name length descending to avoid partial matches
+        const sortedMentions = [...mentions].sort((a, b) => b.displayName.length - a.displayName.length);
+        const escapedNames = sortedMentions.map(m => m.displayName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+        const regex = new RegExp(`@(${escapedNames.join('|')})\\b`, 'g');
+        
+        const parts = content.split(regex);
+        if (parts.length === 1) return content;
+        
+        const result: React.ReactNode[] = [];
+        let matchIndex = 0;
+        for (let i = 0; i < parts.length; i++) {
+            if (i % 2 === 1) {
+                const matchedName = parts[i];
+                const matchedUser = mentions.find(m => m.displayName === matchedName);
+                if (matchedUser) {
+                    result.push(
+                        <Link
+                            key={`mention-${matchIndex++}`}
+                            to={`/profile/${matchedUser.username}`}
+                            className="font-semibold text-primary hover:underline"
+                        >
+                            @{matchedName}
+                        </Link>
+                    );
+                } else {
+                    result.push(`@${matchedName}`);
+                }
+            } else {
+                result.push(parts[i]);
+            }
+        }
+        return result;
+    };
 
     const handleLike = async () => {
         setIsLiked(!isLiked);
@@ -128,8 +178,53 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
     useEffect(() => {
         if (showComments) {
             fetchComments();
+            getFriends();
+            setMentionedIds([]);
         }
-    }, [showComments]);
+    }, [showComments, getFriends]);
+
+    const handleCommentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const text = e.target.value;
+        setNewComment(text);
+        
+        const selectionStart = e.target.selectionStart || 0;
+        const textBeforeCursor = text.substring(0, selectionStart);
+        const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+        
+        if (lastAtIndex !== -1 && (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1] === " ")) {
+            const query = textBeforeCursor.substring(lastAtIndex + 1);
+            if (!query.includes(" ")) {
+                setMentionOpen(true);
+                setMentionQuery(query);
+                setMentionTriggerIndex(lastAtIndex);
+                return;
+            }
+        }
+        setMentionOpen(false);
+    };
+
+    const handleMentionSelect = (friend: any) => {
+        if (mentionTriggerIndex === -1) return;
+        const displayName = friend.displayName || friend.username;
+        const beforeMention = newComment.substring(0, mentionTriggerIndex);
+        const afterMention = newComment.substring(commentInputRef.current?.selectionStart || newComment.length);
+        const newValue = `${beforeMention}@${displayName} ${afterMention}`;
+        
+        setNewComment(newValue);
+        setMentionedIds(prev => {
+            if (prev.includes(friend._id)) return prev;
+            return [...prev, friend._id];
+        });
+        setMentionOpen(false);
+        
+        setTimeout(() => {
+            if (commentInputRef.current) {
+                commentInputRef.current.focus();
+                const newCursorPos = beforeMention.length + displayName.length + 2;
+                commentInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }, 50);
+    };
 
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -144,7 +239,8 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                 },
                 body: JSON.stringify({
                     content: newComment,
-                    parentId: replyToId
+                    parentId: replyToId,
+                    mentions: mentionedIds
                 })
             });
 
@@ -152,6 +248,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                 setNewComment("");
                 setReplyToId(null);
                 setReplyToUser(null);
+                setMentionedIds([]);
                 fetchComments();
                 toast.success("Đã gửi bình luận");
             }
@@ -228,7 +325,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
             {/* Content Text */}
             {post.content && (
                 <div className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-wrap">
-                    {post.content}
+                    {renderContentWithMentions(post.content, post.mentions)}
                 </div>
             )}
 
@@ -321,12 +418,13 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                             <AvatarImage src={user?.avatarURL} alt={user?.displayName} />
                             <AvatarFallback>{user?.displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 flex items-center bg-card border border-border/40 rounded-full px-4 py-1.5">
+                        <div className="flex-1 flex items-center bg-card border border-border/40 rounded-full px-4 py-1.5 relative">
                             <input 
+                                ref={commentInputRef}
                                 type="text" 
                                 placeholder={replyToUser ? `Phản hồi @${replyToUser}...` : "Viết bình luận..."}
                                 value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
+                                onChange={handleCommentInputChange}
                                 className="flex-1 bg-transparent text-sm border-none focus:outline-none placeholder:text-muted-foreground"
                             />
                             {replyToId && (
@@ -341,6 +439,18 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                             <button type="submit" disabled={!newComment.trim()} className="text-primary hover:opacity-80 disabled:opacity-40 transition-opacity">
                                 <Send className="size-4" />
                             </button>
+                            <MentionDropdown 
+                                participants={friends.map(f => ({
+                                    _id: f._id,
+                                    username: f.username,
+                                    displayName: f.displayName || f.username,
+                                    avatarURL: f.avatarURL
+                                }))}
+                                query={mentionQuery}
+                                onSelect={handleMentionSelect}
+                                onClose={() => setMentionOpen(false)}
+                                visible={mentionOpen}
+                            />
                         </div>
                     </form>
 
@@ -366,7 +476,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                                                 </Link>
                                                 <span className="text-[10px] text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
                                             </div>
-                                            <p className="text-sm mt-1">{comment.content}</p>
+                                            <p className="text-sm mt-1">{renderContentWithMentions(comment.content, comment.mentions)}</p>
                                         </div>
                                         <button 
                                             onClick={() => { setReplyToId(comment._id); setReplyToUser(comment.userId.username); }}
@@ -392,7 +502,7 @@ export default function PostCard({ post, onDelete }: PostCardProps) {
                                                     </Link>
                                                     <span className="text-[10px] text-muted-foreground">{formatTimeAgo(reply.createdAt)}</span>
                                                 </div>
-                                                <p className="text-sm mt-1">{reply.content}</p>
+                                                <p className="text-sm mt-1">{renderContentWithMentions(reply.content, reply.mentions)}</p>
                                             </div>
                                         </div>
                                     ))}

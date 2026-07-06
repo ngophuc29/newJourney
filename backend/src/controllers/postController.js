@@ -53,17 +53,49 @@ export const createPost = async (req, res) => {
             return res.status(400).json({ message: "Bài viết phải có nội dung hoặc hình ảnh/video" });
         }
         
+        let mentions = [];
+        if (req.body.mentions) {
+            try {
+                mentions = JSON.parse(req.body.mentions);
+            } catch (e) {
+                mentions = Array.isArray(req.body.mentions) ? req.body.mentions : [req.body.mentions];
+            }
+        }
+        
         const newPost = new Post({
             userId,
             content,
             media,
-            privacy: privacy || "public"
+            privacy: privacy || "public",
+            mentions
         });
         
         await newPost.save();
         
+        // Gửi thông báo đến những người được tag/mention
+        if (mentions && mentions.length > 0) {
+            const notifyPromises = mentions.map(async (mentionedUserId) => {
+                if (mentionedUserId.toString() === userId.toString()) return;
+                
+                const newNotification = new Notification({
+                    userId: mentionedUserId,
+                    type: "post_mention",
+                    senderId: userId,
+                    relatedId: newPost._id
+                });
+                await newNotification.save();
+                
+                // Real-time notify via Socket.io
+                io.to(mentionedUserId.toString()).emit("new-notification", {
+                    notification: await newNotification.populate("senderId", "displayName avatarURL username")
+                });
+            });
+            await Promise.all(notifyPromises);
+        }
+        
         const populatedPost = await Post.findById(newPost._id)
-            .populate("userId", "displayName username avatarURL");
+            .populate("userId", "displayName username avatarURL")
+            .populate("mentions", "displayName username avatarURL");
             
         return res.status(201).json(populatedPost);
     } catch (error) {
@@ -97,7 +129,8 @@ export const getFeed = async (req, res) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate("userId", "displayName username avatarURL");
+        .populate("userId", "displayName username avatarURL")
+        .populate("mentions", "displayName username avatarURL");
         
         const total = await Post.countDocuments({
             $or: [
@@ -129,7 +162,8 @@ export const getExplorePosts = async (req, res) => {
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
-            .populate("userId", "displayName username avatarURL");
+            .populate("userId", "displayName username avatarURL")
+            .populate("mentions", "displayName username avatarURL");
             
         const total = await Post.countDocuments({ privacy: "public" });
         
@@ -178,7 +212,8 @@ export const getUserPosts = async (req, res) => {
             privacy: { $in: privacyFilter }
         })
         .sort({ createdAt: -1 })
-        .populate("userId", "displayName username avatarURL");
+        .populate("userId", "displayName username avatarURL")
+        .populate("mentions", "displayName username avatarURL");
         
         return res.status(200).json(posts);
     } catch (error) {
@@ -251,11 +286,21 @@ export const addComment = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy bài viết" });
         }
         
+        let mentions = [];
+        if (req.body.mentions) {
+            try {
+                mentions = JSON.parse(req.body.mentions);
+            } catch (e) {
+                mentions = Array.isArray(req.body.mentions) ? req.body.mentions : [req.body.mentions];
+            }
+        }
+
         const comment = new Comment({
             postId,
             userId,
             parentId: parentId || null,
-            content: content.trim()
+            content: content.trim(),
+            mentions
         });
         
         await comment.save();
@@ -264,8 +309,30 @@ export const addComment = async (req, res) => {
         post.commentsCount += 1;
         await post.save();
         
+        // Gửi thông báo đến những người được tag/mention trong bình luận
+        if (mentions && mentions.length > 0) {
+            const notifyPromises = mentions.map(async (mentionedUserId) => {
+                if (mentionedUserId.toString() === userId.toString()) return;
+                
+                const newNotification = new Notification({
+                    userId: mentionedUserId,
+                    type: "comment_mention",
+                    senderId: userId,
+                    relatedId: postId
+                });
+                await newNotification.save();
+                
+                // Real-time notify via Socket.io
+                io.to(mentionedUserId.toString()).emit("new-notification", {
+                    notification: await newNotification.populate("senderId", "displayName avatarURL username")
+                });
+            });
+            await Promise.all(notifyPromises);
+        }
+
         const populatedComment = await Comment.findById(comment._id)
-            .populate("userId", "displayName username avatarURL");
+            .populate("userId", "displayName username avatarURL")
+            .populate("mentions", "displayName username avatarURL");
             
         // Create notification for post owner (if commenting on someone else's post)
         if (post.userId.toString() !== userId.toString()) {
@@ -297,13 +364,15 @@ export const getPostComments = async (req, res) => {
         // Find top-level comments first
         const comments = await Comment.find({ postId, parentId: null })
             .sort({ createdAt: 1 })
-            .populate("userId", "displayName username avatarURL");
+            .populate("userId", "displayName username avatarURL")
+            .populate("mentions", "displayName username avatarURL");
             
         // Find replies for each comment
         const commentIds = comments.map(c => c._id);
         const replies = await Comment.find({ parentId: { $in: commentIds } })
             .sort({ createdAt: 1 })
-            .populate("userId", "displayName username avatarURL");
+            .populate("userId", "displayName username avatarURL")
+            .populate("mentions", "displayName username avatarURL");
             
         // Map replies to their parent comments
         const commentsWithReplies = comments.map(comment => {
@@ -354,7 +423,8 @@ export const getPostById = async (req, res) => {
     try {
         const { postId } = req.params;
         const post = await Post.findById(postId)
-            .populate("userId", "displayName username avatarURL");
+            .populate("userId", "displayName username avatarURL")
+            .populate("mentions", "displayName username avatarURL");
             
         if (!post) {
             return res.status(404).json({ message: "Không tìm thấy bài viết" });

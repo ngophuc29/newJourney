@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useFriendStore } from "@/stores/useFriendStore";
+import MentionDropdown from "../chat/MentionDropdown";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
@@ -20,6 +22,64 @@ export default function CreatePostDialog({ open, onOpenChange, onPostCreated }: 
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<string[]>([]);
     const [uploading, setUploading] = useState(false);
+
+    // Mention States
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const { friends, getFriends } = useFriendStore();
+    const [mentionOpen, setMentionOpen] = useState(false);
+    const [mentionQuery, setMentionQuery] = useState("");
+    const [mentionTriggerIndex, setMentionTriggerIndex] = useState(-1);
+    const [mentionedIds, setMentionedIds] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (open) {
+            getFriends();
+            setMentionedIds([]);
+        }
+    }, [open, getFriends]);
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const text = e.target.value;
+        setPostContent(text);
+        
+        const selectionStart = e.target.selectionStart || 0;
+        const textBeforeCursor = text.substring(0, selectionStart);
+        const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+        
+        if (lastAtIndex !== -1 && (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1] === " ")) {
+            const query = textBeforeCursor.substring(lastAtIndex + 1);
+            if (!query.includes(" ")) {
+                setMentionOpen(true);
+                setMentionQuery(query);
+                setMentionTriggerIndex(lastAtIndex);
+                return;
+            }
+        }
+        setMentionOpen(false);
+    };
+
+    const handleMentionSelect = (friend: any) => {
+        if (mentionTriggerIndex === -1) return;
+        const displayName = friend.displayName || friend.username;
+        const beforeMention = postContent.substring(0, mentionTriggerIndex);
+        const afterMention = postContent.substring(textareaRef.current?.selectionStart || postContent.length);
+        const newValue = `${beforeMention}@${displayName} ${afterMention}`;
+        
+        setPostContent(newValue);
+        setMentionedIds(prev => {
+            if (prev.includes(friend._id)) return prev;
+            return [...prev, friend._id];
+        });
+        setMentionOpen(false);
+        
+        setTimeout(() => {
+            if (textareaRef.current) {
+                textareaRef.current.focus();
+                const newCursorPos = beforeMention.length + displayName.length + 2;
+                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+            }
+        }, 50);
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -43,6 +103,9 @@ export default function CreatePostDialog({ open, onOpenChange, onPostCreated }: 
             const formData = new FormData();
             formData.append("content", postContent);
             formData.append("privacy", postPrivacy);
+            if (mentionedIds.length > 0) {
+                formData.append("mentions", JSON.stringify(mentionedIds));
+            }
             selectedFiles.forEach(file => {
                 formData.append("media", file);
             });
@@ -108,12 +171,27 @@ export default function CreatePostDialog({ open, onOpenChange, onPostCreated }: 
                     )}
 
                     {/* Text Area */}
-                    <Textarea
-                        placeholder={`${user?.displayName || "Bạn"} đang nghĩ gì thế?`}
-                        value={postContent}
-                        onChange={(e) => setPostContent(e.target.value)}
-                        className="min-h-[120px] bg-transparent border-none resize-none focus-visible:ring-0 p-0 text-base"
-                    />
+                    <div className="relative">
+                        <Textarea
+                            ref={textareaRef}
+                            placeholder={`${user?.displayName || "Bạn"} đang nghĩ gì thế?`}
+                            value={postContent}
+                            onChange={handleTextChange}
+                            className="min-h-[120px] bg-transparent border-none resize-none focus-visible:ring-0 p-0 text-base w-full"
+                        />
+                        <MentionDropdown 
+                            participants={friends.map(f => ({
+                                _id: f._id,
+                                username: f.username,
+                                displayName: f.displayName || f.username,
+                                avatarURL: f.avatarURL
+                            }))}
+                            query={mentionQuery}
+                            onSelect={handleMentionSelect}
+                            onClose={() => setMentionOpen(false)}
+                            visible={mentionOpen}
+                        />
+                    </div>
 
                     {/* File Previews */}
                     {previews.length > 0 && (
