@@ -2,6 +2,7 @@ import ChatWindowLayout from '@/components/chat/ChatWindowLayout'
 import { AppSidebar } from '@/components/sidebar/app-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/useAuthStore'
+import SEO from '@/components/common/SEO'
  
 
 const ChatApp = () => {
@@ -13,8 +14,7 @@ const ChatApp = () => {
   console.log(user)
   return (
     <>
-    
-   
+    <SEO title="Hộp thư" description="Trò chuyện thời gian thực, trao đổi tin nhắn, hình ảnh và tệp với bạn bè của bạn trên NewJourney." />
     <SidebarProvider>
       <AppSidebar />
         {/* <div className='block'>

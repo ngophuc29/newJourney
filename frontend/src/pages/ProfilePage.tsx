@@ -14,6 +14,7 @@ import { useChatStore } from "@/stores/useChatStore";
 import { useSocketStore } from "@/stores/useSocketStore";
 import { useFriendStore } from "@/stores/useFriendStore";
 import ProfileDialog from "@/components/profile/ProfileDialog";
+import SEO from "@/components/common/SEO";
 
 interface SocialUser {
     _id: string;
@@ -388,6 +389,11 @@ export default function ProfilePage() {
 
     return (
         <div className="flex-1 h-full overflow-y-auto beautiful-scrollbar bg-background pb-12">
+            <SEO 
+                title={`${profileUser.displayName} (@${profileUser.username})`} 
+                description={profileUser.bio || `Trang cá nhân của ${profileUser.displayName} (@${profileUser.username}) trên mạng xã hội NewJourney.`} 
+                image={profileUser.avatarURL || "/logo.png"} 
+            />
             {/* Cover Photo Container */}
             <div className="relative w-full h-[200px] md:h-[300px] bg-accent/40 overflow-hidden">
                 {profileUser.coverPhotoURL ? (

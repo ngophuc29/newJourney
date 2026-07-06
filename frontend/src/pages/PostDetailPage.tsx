@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import PostCard from "@/components/social/PostCard";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SEO from "@/components/common/SEO";
 
 interface PostType {
     _id: string;
@@ -94,6 +95,12 @@ export default function PostDetailPage() {
 
     return (
         <div className="flex-1 h-full overflow-y-auto beautiful-scrollbar bg-background flex flex-col items-center py-8 px-4">
+            <SEO 
+                title={`Bài viết của ${post.userId.displayName}`} 
+                description={post.content || `Xem chi tiết bài đăng của ${post.userId.displayName} trên NewJourney.`} 
+                image={post.media?.[0]?.url || post.userId.avatarURL || "/logo.png"} 
+                type="article"
+            />
             <div className="w-full max-w-[600px] flex flex-col items-start gap-4">
                 {/* Back Button */}
                 <Button 

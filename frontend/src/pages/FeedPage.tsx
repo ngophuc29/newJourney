@@ -11,6 +11,8 @@ import { Image, Video, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
+import SEO from "@/components/common/SEO";
+
 interface SuggestedUser {
     _id: string;
     username: string;
@@ -100,6 +102,7 @@ export default function FeedPage() {
 
     return (
         <div className="flex-1 h-full w-full overflow-y-auto beautiful-scrollbar bg-background flex justify-center py-6 px-4 md:px-8">
+            <SEO title="Bảng tin" description="Xem bảng tin, kết nối với bạn bè và chia sẻ những khoảnh khắc đẹp của cuộc sống trên NewJourney." />
             <div className="flex w-full max-w-[935px] gap-8">
                 {/* LEFT: Feed Content */}
                 <div className="flex-1 flex flex-col items-center min-w-0 max-w-[600px]">
